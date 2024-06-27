@@ -1,0 +1,6 @@
+/vis/open OGL
+/vis/drawVolume
+/vis/viewer/zoom 1.4
+/vis/scene/add/trajectories smooth
+/vis/scene/endOfEventAction accumulate
+/run/initialize
