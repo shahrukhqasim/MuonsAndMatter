@@ -4,6 +4,7 @@
 #include "G4VUserPrimaryGeneratorAction.hh"
 #include "G4ParticleGun.hh"
 #include "G4Event.hh"
+#include "CustomSteppingAction.hh"
 
 class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 {
@@ -12,9 +13,12 @@ public:
     virtual ~PrimaryGeneratorAction();
 
     virtual void GeneratePrimaries(G4Event*);
+    void setSteppingAction(CustomSteppingAction* steppingAction);
 
 private:
     G4ParticleGun* fParticleGun;
+protected:
+    CustomSteppingAction * m_steppingAction;
 };
 
 #endif

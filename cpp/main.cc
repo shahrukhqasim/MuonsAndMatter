@@ -1,11 +1,55 @@
 #include "G4RunManager.hh"
 #include "G4UImanager.hh"
 #include "QBBC.hh"
+#include "G4UImanager.hh"
+#include "FTFP_BERT.hh"
+#include "QGSP_BERT_HP.hh"
+#include "QGSP_BERT.hh"
+#include "G4EmLivermorePhysics.hh"
 #include "G4VisExecutive.hh"
 #include "G4UIExecutive.hh"
 
 #include "DetectorConstruction.hh"
 #include "PrimaryGeneratorAction.hh"
+#include "CustomSteppingAction.hh"
+
+#include "G4PhysicsListHelper.hh"
+#include "G4StepLimiterPhysics.hh"
+#include "G4MuBremsstrahlung.hh"
+#include "G4PhysListFactory.hh"
+#include "G4ParticleTypes.hh"
+
+
+
+
+//// Custom physics list (if needed)
+//class CustomPhysicsList : public G4VModularPhysicsList {
+//public:
+//    CustomPhysicsList() {
+//        G4PhysListFactory factory;
+//        SetPhysicsList(factory.GetReferencePhysList("FTFP_BERT"));
+//    }
+//
+//    void ConstructProcess() override {
+//        G4VModularPhysicsList::ConstructProcess();
+//
+//        // Get the particle definition for muons
+//        G4ParticleDefinition* muPlus = G4MuonPlus::MuonPlusDefinition();
+//        G4ParticleDefinition* muMinus = G4MuonMinus::MuonMinusDefinition();
+//
+//        // Get the process manager for muons
+//        G4ProcessManager* pManagerPlus = muPlus->GetProcessManager();
+//        G4ProcessManager* pManagerMinus = muMinus->GetProcessManager();
+//
+//        // Create the bremsstrahlung process
+//        G4MuBremsstrahlung* muBremsstrahlung = new G4MuBremsstrahlung();
+//
+//        // Add the process to the process manager
+//        pManagerPlus->AddDiscreteProcess(muBremsstrahlung);
+//        pManagerMinus->AddDiscreteProcess(muBremsstrahlung);
+//    }
+//};
+
 
 int main(int argc, char** argv)
 {
@@ -22,11 +66,18 @@ int main(int argc, char** argv)
     runManager->SetUserInitialization(new DetectorConstruction());
 
     // Use the QGSP_BERT physics list
-    G4VModularPhysicsList* physicsList = new QBBC;
+    G4VModularPhysicsList* physicsList = new QGSP_BERT;
+//    physicsList->RegisterPhysics(new G4EmLivermorePhysics());
+//    physicsList->RegisterPhysics(new G4StepLimiterPhysics());
     runManager->SetUserInitialization(physicsList);
 
+    PrimaryGeneratorAction *primaryGeneratorAction = new PrimaryGeneratorAction();
+    CustomSteppingAction *customSteppingAction = new CustomSteppingAction();
+    primaryGeneratorAction->setSteppingAction(customSteppingAction);
+
     // Set user action classes
-    runManager->SetUserAction(new PrimaryGeneratorAction());
+    runManager->SetUserAction(primaryGeneratorAction);
+    runManager->SetUserAction(customSteppingAction);
 
     // Initialize visualization
     G4VisManager* visManager = new G4VisExecutive;
@@ -40,7 +91,9 @@ int main(int argc, char** argv)
         UImanager->ApplyCommand("/control/execute init_vis.mac");
         ui->SessionStart();
         delete ui;
-    } else {
+    } else
+
+    {
         // Batch mode
         G4String command = "/control/execute ";
         G4String fileName = argv[1];

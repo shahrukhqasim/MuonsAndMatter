@@ -1,6 +1,16 @@
-/vis/open OGL
-/vis/drawVolume
-/vis/viewer/zoom 1.4
+/vis/open OGLIX 600x600-0+0
+/vis/viewer/set/autoRefresh true
+
+/vis/scene/add/axes 0 0 0 10 cm
+/vis/viewer/set/style wireframe
+/vis/viewer/set/hiddenMarker true
+/vis/viewer/set/viewpointThetaPhi 60 30
+
+/run/initialize
+/vis/viewer/set/style wireframe
+/vis/scene/create
 /vis/scene/add/trajectories smooth
 /vis/scene/endOfEventAction accumulate
-/run/initialize
+/vis/drawVolume
+/vis/viewer/zoom 0.7
+/vis/viewer/update
