@@ -32,7 +32,7 @@ PrimaryGeneratorAction::~PrimaryGeneratorAction()
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 {
     if(m_steppingAction!=NULL) {
-        std::cout<<"Num steps last run: "<<m_steppingAction->num_steps<<std::endl;
+//        std::cout<<"Num steps last run: "<<m_steppingAction->num_steps<<std::endl;
         m_steppingAction->num_steps = 0;
     }
     else {
@@ -43,14 +43,18 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
     // Define particle properties
     G4String particleName = "mu-";
-    G4ThreeVector position(0, 0, 0.*m);
-    G4ThreeVector momentum(1*GeV, 60*GeV, 4*GeV);
+
+    if(next_charge == 1)
+        particleName = "mu+";
+
+    G4ThreeVector position(next_x*m, next_y*m, next_z*m);
+    G4ThreeVector momentum(next_px*GeV, next_py*GeV, next_pz*GeV);
     G4double time = 0;
     // Get particle definition from G4ParticleTable
     G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
     G4ParticleDefinition* particleDefinition = particleTable->FindParticle(particleName);
 
-    std::cout << "Charge: " << particleDefinition->GetPDGCharge () << std::endl;
+//    std::cout << "Charge: " << particleDefinition->GetPDGCharge () << std::endl;
 
     if ( ! particleDefinition ) {
     G4cerr << "Error: " << particleName << " not found in G4ParticleTable" << G4endl;
@@ -71,4 +75,22 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 void PrimaryGeneratorAction::setSteppingAction(CustomSteppingAction* steppingAction) {
     m_steppingAction = steppingAction;
+}
+
+
+void PrimaryGeneratorAction::setNextMomenta(double nextPx, double nextPy, double nextPz) {
+    next_px = nextPx;
+    next_py = nextPy;
+    next_pz = nextPz;
+}
+
+
+void PrimaryGeneratorAction::setNextPosition(double nextX, double nextY, double nextZ) {
+    next_x = nextX;
+    next_y = nextY;
+    next_z = nextZ;
+}
+
+void PrimaryGeneratorAction::setNextCharge(int charge) {
+    PrimaryGeneratorAction::next_charge = charge;
 }

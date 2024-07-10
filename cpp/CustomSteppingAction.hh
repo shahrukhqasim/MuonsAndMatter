@@ -37,6 +37,15 @@ public:
 
     int primaryTrackId;
 
+    double killMomenta;
+    bool killSecondary;
+
+    void setKillMomenta(double killMomenta);
+
+    void setKillSecondary(bool killSecondary);
+
+    double max_momenta_diff; // Only for debugging...
+
 public:
     int num_steps;
 };

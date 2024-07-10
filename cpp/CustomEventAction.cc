@@ -26,14 +26,14 @@ void CustomEventAction::BeginOfEventAction(const G4Event* event)
         steppingAction->clean();
     }
     G4int eventID = event->GetEventID();
-    G4cout << "Starting Event: " << eventID << G4endl;
+//    G4cout << "Starting Event: " << eventID << G4endl;
     // Add additional initialization code here
 }
 
 void CustomEventAction::EndOfEventAction(const G4Event* event)
 {
     G4int eventID = event->GetEventID();
-    G4cout << "Ending Event: " << eventID << G4endl;
+//    G4cout << "Ending Event: " << eventID << G4endl;
     // Add additional finalization code here
 }
 

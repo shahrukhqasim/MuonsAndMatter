@@ -21,7 +21,10 @@
 CustomSteppingAction::CustomSteppingAction()
     : G4UserSteppingAction(), eventManager(G4EventManager::GetEventManager())
 {
-    primaryTrackId=1; // Assume its one; might need to be changed if more than one primary particles are introduced
+    primaryTrackId = 1; // Assume it's one; might need to be changed if more than one primary particles are introduced
+    killMomenta = -1;
+    max_momenta_diff = -1;
+    killSecondary = false;
 }
 
 CustomSteppingAction::~CustomSteppingAction()
@@ -96,30 +99,62 @@ void CustomSteppingAction::UserSteppingAction(const G4Step* step)
 
 //     G4cout << "Step length: " << step->GetStepLength() / mm << " mm" << G4endl;
 
-    if (momentum.mag() / GeV > 40) {
-        G4cout << "(" << momentum.x() / GeV << " GeV/c, "
-               << momentum.y() / GeV << " GeV/c, "
-               << momentum.z() / GeV << " GeV/c) and track id "
-               << track->GetTrackID() << " and step size "
-               << step->GetStepLength() / mm << " mm"
-               << G4endl;
-    }
+//    if (momentum.mag() / GeV > 40) {
+//        G4cout << "(" << momentum.x() / GeV << " GeV/c, "
+//               << momentum.y() / GeV << " GeV/c, "
+//               << momentum.z() / GeV << " GeV/c) and track id "
+//               << track->GetTrackID() << " and step size "
+//               << step->GetStepLength() / mm << " mm"
+//               << G4endl;
+//    }
 
     if (track->GetTrackID() == primaryTrackId) {
         G4ThreeVector position2 = track->GetPosition();
 
         // Fill the vectors with current step data
-        px.push_back(momentum.x());
-        py.push_back(momentum.y());
-        pz.push_back(momentum.z());
+        px.push_back(momentum.x() / GeV);
+        py.push_back(momentum.y() / GeV);
+        pz.push_back(momentum.z() / GeV);
 
-        x.push_back(position2.x());
-        y.push_back(position2.y());
-        z.push_back(position2.z());
+        x.push_back(position2.x() / m);
+        y.push_back(position2.y() / m);
+        z.push_back(position2.z() / m);
 
-        stepLength.push_back(step->GetStepLength());
+        stepLength.push_back(step->GetStepLength() / m);
         chargeDeposit.push_back(step->GetTotalEnergyDeposit());
+
+        // Calculate the current momenta magnitude
+        double current_momentum_mag = momentum.mag() / GeV;
+
+        // Compute the difference in momenta magnitude if px size is greater than 0
+        if (px.size() > 1) {
+            double previous_momentum_mag = sqrt(px[px.size() - 2] * px[px.size() - 2] +
+                                                py[py.size() - 2] * py[py.size() - 2] +
+                                                pz[pz.size() - 2] * pz[pz.size() - 2]);
+
+            double new_diff = current_momentum_mag - previous_momentum_mag;
+
+            // Update max_momenta_diff if new_diff is greater
+            if (fabs(new_diff) > max_momenta_diff) {
+                max_momenta_diff = fabs(new_diff);
+//                std::cout << "New max momenta diff: " << max_momenta_diff << " "<<previous_momentum_mag<<" "<<current_momentum_mag<< std::endl;
+            }
+        }
+
+        if (killMomenta > 0) {
+            if (momentum.mag() / GeV < killMomenta) {
+//                std::cout<<"Killing because found moments is "<<momentum.mag() / GeV<<" GeV and to be killed at "<<killMomenta<<"\n";
+                track->SetTrackStatus(fStopAndKill);
+            }
+        }
     }
+    else if (killSecondary) {
+        track->SetTrackStatus(fStopAndKill);
+    }
+    else {
+
+    }
+
 
 
 
@@ -145,5 +180,13 @@ void CustomSteppingAction::clean() {
     z.clear();
     stepLength.clear();
     chargeDeposit.clear();
-    std::cout<<"Cleaning!"<<std::endl;
+//    std::cout<<"Cleaning!"<<std::endl;
+}
+
+void CustomSteppingAction::setKillMomenta(double killMomenta) {
+    CustomSteppingAction::killMomenta = killMomenta;
+}
+
+void CustomSteppingAction::setKillSecondary(bool killSecondary) {
+    CustomSteppingAction::killSecondary = killSecondary;
 }

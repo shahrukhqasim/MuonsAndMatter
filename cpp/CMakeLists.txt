@@ -12,6 +12,7 @@ set(PYBIND11_FINDPYTHON ON)
 find_package(pybind11 REQUIRED)
 find_package(Geant4 REQUIRED ui_all vis_all)
 include_directories(/Users/shahrukhqasim/workspace/uzh/Geant4-11.2.2/include/Geant4)
+include_directories(/usr/local/include/Geant4/)
 
 set(SOURCE_FILES
         DetectorConstruction.cc
@@ -28,6 +29,8 @@ add_executable(MuonSlab main.cc)
 # Create the Python module
 target_link_libraries(MuonSlab common_sources ${Geant4_LIBRARIES})
 #target_link_libraries(muon_slabs ${Geant4_LIBRARIES})
+set_target_properties(common_sources PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 
 pybind11_add_module(muon_slabs MuonSlabs.cc)
 target_link_libraries(muon_slabs PUBLIC common_sources ${Geant4_LIBRARIES})

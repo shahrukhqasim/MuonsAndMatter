@@ -47,12 +47,13 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     double limit_world_energy_max_=100*eV;
 
     // Create a user limits object with a maximum step size of 1 mm
-    G4double maxStep = 0.0001 * mm;
-    G4UserLimits* userLimits =new G4UserLimits(
-	        DBL_MAX, //max step length
-            10*mm, //max track length
-            limit_world_time_max_, //max track time
-            limit_world_energy_max_);
+    G4double maxStep = 5 * cm;
+    G4UserLimits* userLimits =new G4UserLimits(maxStep);
+//    G4UserLimits* userLimits =new G4UserLimits(
+//	        DBL_MAX, //max step length
+//            10*mm, //max track length
+//            limit_world_time_max_, //max track time
+//            limit_world_energy_max_);
 
     // Get NIST material manager
     G4NistManager* nist = G4NistManager::Instance();
@@ -64,7 +65,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
 
     // Define the radius of the sphere
-    G4double sphereRadius = 35.0 * m;
+    G4double sphereRadius = 500 * m;
 
     // Define the world volume
     G4double worldSizeXY = 1.2 * sphereRadius * 2;

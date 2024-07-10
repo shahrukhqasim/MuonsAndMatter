@@ -17,6 +17,21 @@ public:
 
 private:
     G4ParticleGun* fParticleGun;
+    double next_px;
+    double next_py;
+    double next_pz;
+    double next_x;
+    double next_y;
+    double next_z;
+    int next_charge;
+public:
+    void setNextMomenta(double nextPx, double nextPy, double nextPz);
+    void setNextPosition(double nextX, double nextY, double nextZ);
+
+protected:
+public:
+    void setNextCharge(int charge);
+
 protected:
     CustomSteppingAction * m_steppingAction;
 };

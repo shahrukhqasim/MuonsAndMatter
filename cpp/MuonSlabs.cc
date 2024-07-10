@@ -42,6 +42,10 @@ void simulate_muon(double px, double py, double pz, int charge,
         throw std::runtime_error("Forgot to call initialize?");
     }
 
+    primariesGenerator->setNextMomenta(px, py, pz);
+    primariesGenerator->setNextPosition(x, y, z);
+    primariesGenerator->setNextCharge(charge);
+
     ui_manager->ApplyCommand(std::string("/run/beamOn ") + std::to_string(1));
 
 
@@ -89,8 +93,8 @@ py::dict collect() {
             "x"_a = np_x,
             "y"_a = np_y,
             "z"_a = np_z,
-            "stepLength"_a = np_stepLength,
-            "chargeDeposit"_a = np_chargeDeposit
+            "step_length"_a = np_stepLength,
+            "charge_deposit"_a = np_chargeDeposit
     );
 
     return d;
@@ -98,6 +102,10 @@ py::dict collect() {
 
 void set_field_value(double strength, double theta, double phi) {
     detector->setMagneticFieldValue(strength, theta, phi);
+}
+
+void set_kill_momenta(double kill_momenta) {
+    steppingAction->setKillMomenta(kill_momenta);
 }
 
 void initialize( int rseed_0,
@@ -140,12 +148,18 @@ void initialize( int rseed_0,
     ui_manager->ApplyCommand(std::string("/run/printProgress 100"));
 }
 
+void kill_secondary_tracks(bool do_kill) {
+    steppingAction->setKillSecondary(do_kill);
+}
+
 PYBIND11_MODULE(muon_slabs, m) {
     m.def("add", &add, "A function which adds two numbers");
     m.def("simulate_muon", &simulate_muon, "A function which simulates a muon through geant4 and returns the steps");
     m.def("initialize", &initialize, "Initialize geant4 stuff");
     m.def("collect", &collect, "Collect back the data");
     m.def("set_field_value", &set_field_value, "Set the magnetic field value");
+    m.def("set_kill_momenta", &set_kill_momenta, "Set the kill momenta");
+    m.def("kill_secondary_tracks", &kill_secondary_tracks, "Kill all tracks from resulting cascade");
 }
 
 // Compile the C++ code to a shared library
