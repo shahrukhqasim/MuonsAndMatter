@@ -14,11 +14,20 @@ find_package(Geant4 REQUIRED ui_all vis_all)
 include_directories(/Users/shahrukhqasim/workspace/uzh/Geant4-11.2.2/include/Geant4)
 include_directories(/usr/local/include/Geant4/)
 
+
+# Add subdirectory for jsoncpp
+add_subdirectory(external/jsoncpp)
+
+# Add the include directory for jsoncpp
+include_directories(external/jsoncpp/include)
+
 set(SOURCE_FILES
         DetectorConstruction.cc
         PrimaryGeneratorAction.cc
         CustomSteppingAction.cc
         CustomEventAction.cc
+        BoxyDetectorConstruction.cc
+        GDetectorConstruction.cc
         )
 
 
@@ -27,12 +36,12 @@ add_library(common_sources STATIC ${SOURCE_FILES})
 add_executable(MuonSlab main.cc)
 
 # Create the Python module
-target_link_libraries(MuonSlab common_sources ${Geant4_LIBRARIES})
+target_link_libraries(MuonSlab common_sources ${Geant4_LIBRARIES} jsoncpp_lib)
 #target_link_libraries(muon_slabs ${Geant4_LIBRARIES})
 set_target_properties(common_sources PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 
 pybind11_add_module(muon_slabs MuonSlabs.cc)
-target_link_libraries(muon_slabs PUBLIC common_sources ${Geant4_LIBRARIES})
+target_link_libraries(muon_slabs PUBLIC common_sources ${Geant4_LIBRARIES} jsoncpp_lib)
 
 configure_file(init_vis.mac init_vis.mac COPYONLY)

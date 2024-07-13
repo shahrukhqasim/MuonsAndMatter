@@ -35,7 +35,9 @@
 
 DetectorConstruction::DetectorConstruction()
 : G4VUserDetectorConstruction()
-{ }
+{
+
+}
 
 DetectorConstruction::~DetectorConstruction()
 { }

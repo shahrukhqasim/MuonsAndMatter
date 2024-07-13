@@ -4,6 +4,7 @@
 #include <G4UniformMagField.hh>
 #include "G4VUserDetectorConstruction.hh"
 #include "G4VPhysicalVolume.hh"
+#include "json/json.h"
 
 class DetectorConstruction : public G4VUserDetectorConstruction
 {
@@ -12,9 +13,10 @@ public:
     virtual ~DetectorConstruction();
 
     virtual G4VPhysicalVolume* Construct();
-    void setMagneticFieldValue(double strength, double theta, double phi);
-private:
+    virtual void setMagneticFieldValue(double strength, double theta, double phi);
+protected:
     G4UniformMagField* magField;
+
 };
 
 #endif

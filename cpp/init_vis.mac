@@ -1,4 +1,4 @@
-/vis/open OGLIX 600x600-0+0
+/vis/open OGLIX 1000x1000-0+0
 /vis/viewer/set/autoRefresh true
 
 /vis/scene/add/axes 0 0 0 10 cm
@@ -12,5 +12,5 @@
 /vis/scene/add/trajectories smooth
 /vis/scene/endOfEventAction accumulate
 /vis/drawVolume
-/vis/viewer/zoom 0.7
+/vis/viewer/zoom 0.9
 /vis/viewer/update

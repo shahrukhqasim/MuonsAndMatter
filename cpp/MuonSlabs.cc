@@ -13,8 +13,12 @@
 #include "PrimaryGeneratorAction.cc"
 #include "FTFP_BERT.hh"
 #include "CustomEventAction.hh"
+#include "BoxyDetectorConstruction.hh"
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
+#include <G4UIExecutive.hh>
+#include "QGSP_BERT.hh"
+#include "GDetectorConstruction.hh"
 
 namespace py = pybind11;
 using namespace py::literals;
@@ -109,7 +113,7 @@ void set_kill_momenta(double kill_momenta) {
 }
 
 void initialize( int rseed_0,
-                 int rseed_1, int rseed_2, int rseed_3) {
+                 int rseed_1, int rseed_2, int rseed_3, int type, std::string detector_specs) {
     randomEngine = new CLHEP::MTwistEngine(rseed_0);
 
 
@@ -120,11 +124,20 @@ void initialize( int rseed_0,
 
     runManager = new G4RunManager;
 
-    detector = new DetectorConstruction();
+    if (detector_specs.size()==0)
+        detector = new DetectorConstruction();
+    else if(type==0)
+        detector = new BoxyDetectorConstruction(detector_specs);
+    else if (type==1)
+        detector = new GDetectorConstruction(detector_specs);
+    else
+        throw std::runtime_error("Invalid detector type specified.");
+
     std::cout<<"Detector initializing..."<<std::endl;
     runManager->SetUserInitialization(detector);
 
     auto physicsList = new FTFP_BERT;
+//    auto physicsList = new QGSP_BERT;
 //    physicsList->RegisterPhysics(new G4StepLimiterPhysics());
     runManager->SetUserInitialization(physicsList);
 
@@ -144,12 +157,37 @@ void initialize( int rseed_0,
     // Get the pointer to the User Interface manager
     ui_manager = G4UImanager::GetUIpointer();
 
+
     ui_manager->ApplyCommand(std::string("/run/initialize"));
     ui_manager->ApplyCommand(std::string("/run/printProgress 100"));
+
+    std::cout<<"Initialized"<<std::endl;
 }
 
 void kill_secondary_tracks(bool do_kill) {
     steppingAction->setKillSecondary(do_kill);
+}
+
+void visualize() {
+    // Interactive mode
+    ui_manager->ApplyCommand("/vis/open OGLIX 600x600-0+0");
+    ui_manager->ApplyCommand("/vis/viewer/set/autoRefresh true");
+    ui_manager->ApplyCommand("/vis/scene/add/axes 0 0 0 10 cm");
+    ui_manager->ApplyCommand("/vis/viewer/set/style wireframe");
+    ui_manager->ApplyCommand("/vis/viewer/set/hiddenMarker true");
+    ui_manager->ApplyCommand("/vis/viewer/set/viewpointThetaPhi 60 30");
+    ui_manager->ApplyCommand("/vis/drawVolume");
+    ui_manager->ApplyCommand("/vis/viewer/zoom 0.7");
+    ui_manager->ApplyCommand("/vis/viewer/update");
+    ui_manager->ApplyCommand("/run/initialize");
+//    auto ui = new G4UIExecutive(1, nullptr);
+//    ui->SessionStart();
+//    ui->SessionStart();
+//    G4UIExecutive* ui = nullptr;
+//    if (argc == 1) {
+//        ui = new G4UIExecutive(argc, argv);
+//    }
+
 }
 
 PYBIND11_MODULE(muon_slabs, m) {
@@ -160,6 +198,7 @@ PYBIND11_MODULE(muon_slabs, m) {
     m.def("set_field_value", &set_field_value, "Set the magnetic field value");
     m.def("set_kill_momenta", &set_kill_momenta, "Set the kill momenta");
     m.def("kill_secondary_tracks", &kill_secondary_tracks, "Kill all tracks from resulting cascade");
+    m.def("visualize", &visualize, "Visualize");
 }
 
 // Compile the C++ code to a shared library

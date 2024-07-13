@@ -18,6 +18,8 @@
 #include "G4MuBremsstrahlung.hh"
 #include "G4PhysListFactory.hh"
 #include "G4ParticleTypes.hh"
+#include "BoxyDetectorConstruction.hh"
+#include "GDetectorConstruction.hh"
 
 
 
@@ -62,8 +64,27 @@ int main(int argc, char** argv)
     // Construct the default run manager
     G4RunManager* runManager = new G4RunManager;
 
+//    std::ifstream inputFile("../../data/boxy.json");
+    std::ifstream inputFile("../../data/gdetector.json");
+    if (!inputFile) {
+        std::cerr << "Unable to open file";
+        return 1;
+    }
+
+    std::string fileContents;
+    std::string line;
+
+    while (std::getline(inputFile, line)) {
+        fileContents += line + "\n";
+    }
+
+    inputFile.close();
+
     // Set mandatory initialization classes
-    runManager->SetUserInitialization(new DetectorConstruction());
+    runManager->SetUserInitialization(new GDetectorConstruction(fileContents));
+//    runManager->SetUserInitialization(new BoxyDetectorConstruction(fileContents));
+//    runManager->SetUserInitialization(new DetectorConstruction);
+
 
     // Use the QGSP_BERT physics list
     G4VModularPhysicsList* physicsList = new QGSP_BERT;

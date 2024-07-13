@@ -65,6 +65,9 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
     primaryParticle->SetMomentum(momentum.x(), momentum.y(), momentum.z());
     primaryParticle->SetMass(particleDefinition->GetPDGMass());
     primaryParticle->SetCharge( particleDefinition->GetPDGCharge());
+
+    std::cout<<"MMM: "<<primaryParticle->GetTotalMomentum() / GeV<<std::endl;
+
 //    primaryParticle->SetParticleEnergy(2000. * GeV);
 
     // Create vertex
