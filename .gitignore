@@ -1,0 +1,23 @@
+# Ignore __pycache__ directories
+__pycache__/
+
+# Ignore .idea folder
+.idea/
+
+# Ignore .DS_Store files
+.DS_Store
+
+# Ignore build directory
+build/
+
+# Ignore cpp/cmake-build-debug directory
+cpp/cmake-build-debug/
+
+# Ignore plots directory
+plots/
+
+# Ignore data directory
+data/
+
+# Ignore checks directory
+checks/
