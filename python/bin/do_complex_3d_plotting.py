@@ -2,10 +2,9 @@ import json
 
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-from muon_slabs import add, simulate_muon, initialize, collect, set_field_value, set_kill_momenta, kill_secondary_tracks
-from magnet_params.params_design_8 import *
+from muon_slabs import simulate_muon, initialize, collect, kill_secondary_tracks
+from lib.magnet_params.params_design_9 import *
 # from magnet_paramsX import *
 import time
 from tqdm import tqdm
@@ -33,6 +32,7 @@ for mag in magnets:
     mag['z_center'] = mag['z_center']/100. + bias
     components_2 = mag['components']
     print(components_2)
+
     components_2 = [{'corners': (np.array(x['corners']) / 100.).tolist(),
                      'field': (x['field'][0]/mag_unit, x['field'][1]/mag_unit, x['field'][2]/mag_unit)} for x in components_2]
     mag['components'] = components_2
@@ -68,13 +68,13 @@ for i in range(10):
     # momenta = np.maximum(10., np.random.normal(40.,10.))
     # momenta = -momenta
     print(charge)
-    simulate_muon(0, 0, 50, charge, np.random.normal(0, 0.05), np.random.normal(0, 0.05), -10)
+    simulate_muon(0, 0, 20, charge, np.random.normal(0, 0.05), np.random.normal(0, 0.05), -10)
     data = collect()
     muon_data += [data]
 #
 # 0/0
 
-with open('data/gdetector.json', 'w') as f:
+with open('../../data/gdetector.json', 'w') as f:
     json.dump(detector, f)
 
 for mag in magnets:
@@ -167,6 +167,7 @@ ax.set_xlabel('Z (m)')
 ax.set_ylabel('X (m)')
 ax.set_zlabel('Y (m)')
 
+fig.tight_layout()
 plt.show()
 
 
@@ -190,34 +191,34 @@ def run_test(kill_secondary, num_tests, num_muons, momenta_value):
     return np.array(times)
 
 
-results_collected = []
-num_tests = 3
-num_muons = 40
-kill_secondary = False
-momenta_value = 70
-results = run_test(kill_secondary, num_tests, num_muons, momenta_value)
-results_collected.append((momenta_value, kill_secondary, results))
-
-
-kill_secondary = True
-momenta_value = 70
-results = run_test(kill_secondary, num_tests, num_muons, momenta_value)
-results_collected.append((momenta_value, kill_secondary, results))
-
-
-kill_secondary = False
-momenta_value = 20
-results = run_test(kill_secondary, num_tests, num_muons, momenta_value)
-results_collected.append((momenta_value, kill_secondary, results))
-
-kill_secondary = True
-momenta_value = 20
-results = run_test(kill_secondary, num_tests, num_muons, momenta_value)
-results_collected.append((momenta_value, kill_secondary, results))
+# results_collected = []
+# num_tests = 3
+# num_muons = 40
+# kill_secondary = False
+# momenta_value = 70
+# results = run_test(kill_secondary, num_tests, num_muons, momenta_value)
+# results_collected.append((momenta_value, kill_secondary, results))
 #
 #
-for momenta_value, kill_secondary, results in results_collected:
-    seconds = np.mean(results) / num_muons
-    seconds_for_full = seconds * 10**5 * 4.5
-
-    print("Momenta=%f GeV and kill_secondary=%d took %f seconds (%s for 10**5 * 4.5)"%(momenta_value, kill_secondary, seconds, (convert_seconds(seconds_for_full))))
+# kill_secondary = True
+# momenta_value = 70
+# results = run_test(kill_secondary, num_tests, num_muons, momenta_value)
+# results_collected.append((momenta_value, kill_secondary, results))
+#
+#
+# kill_secondary = False
+# momenta_value = 20
+# results = run_test(kill_secondary, num_tests, num_muons, momenta_value)
+# results_collected.append((momenta_value, kill_secondary, results))
+#
+# kill_secondary = True
+# momenta_value = 20
+# results = run_test(kill_secondary, num_tests, num_muons, momenta_value)
+# results_collected.append((momenta_value, kill_secondary, results))
+# #
+# #
+# for momenta_value, kill_secondary, results in results_collected:
+#     seconds = np.mean(results) / num_muons
+#     seconds_for_full = seconds * 10**5 * 4.5
+#
+#     print("Momenta=%f GeV and kill_secondary=%d took %f seconds (%s for 10**5 * 4.5)"%(momenta_value, kill_secondary, seconds, (convert_seconds(seconds_for_full))))

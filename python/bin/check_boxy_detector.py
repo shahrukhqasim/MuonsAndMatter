@@ -187,7 +187,7 @@ def main():
 
     initialize(0, 4, 4, 5, json.dumps(detector))
 
-    with open('data/boxy.json', 'w') as f:
+    with open('../../data/boxy.json', 'w') as f:
         json.dump(detector, f)
 
     print("Here")

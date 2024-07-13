@@ -51,7 +51,7 @@ initial_momenta_vectors = random_vector_of_magnitude_p(1, num_sims)
 
 
 load_old = False
-pickle_file = 'muon_data_energy_loss.pkl'
+pickle_file = '../../data/muon_data_energy_loss.pkl'
 
 if load_old:
     # Load old data from pickle file

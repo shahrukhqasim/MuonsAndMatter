@@ -1,7 +1,7 @@
 import uproot
 
 # Open the ROOT file
-file_path = 'data/geofile_full.fe_0_n_events_1000.root'
+file_path = '../../data/geofile_full.fe_0_n_events_1000.root'
 file = uproot.open(file_path)
 
 # List the contents of the ROOT file

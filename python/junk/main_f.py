@@ -21,7 +21,7 @@ kill_secondary_tracks(True)
 
 
 load_old = False
-pickle_file = 'muon_data.pkl'
+pickle_file = '../../data/muon_data.pkl'
 
 if load_old:
     # Load old data from pickle file

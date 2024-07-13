@@ -1,13 +1,11 @@
 import time
 
-import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
-import pickle
-from matplotlib_settings import *
+from lib.matplotlib_settings import *
 import csv
 
-file_path = 'data/momentums_positions.csv'
+file_path = '../../data/momentums_positions.csv'
 
 with open(file_path, mode='r') as file:
     csv_reader = csv.reader(file)
@@ -27,7 +25,7 @@ with open(file_path, mode='r') as file:
 
 
 t1 = time.time()
-from muon_slabs import add, simulate_muon, initialize, collect, set_field_value, set_kill_momenta, kill_secondary_tracks
+from muon_slabs import simulate_muon, initialize, collect, set_field_value, kill_secondary_tracks
 
 
 # Initialize muon simulation
@@ -61,7 +59,7 @@ def convert_seconds(seconds):
 
 
 load_old = False
-pickle_file = 'muon_data.pkl'
+pickle_file = '../../data/muon_data.pkl'
 
 
 def run_test(kill_secondary, num_tests, num_muons, momenta_value):

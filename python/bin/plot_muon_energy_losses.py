@@ -2,10 +2,9 @@ import gzip
 import pickle
 import numpy as np
 # import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
-from matplotlib_settings import *
+from lib.matplotlib_settings import *
 
-pickle_file = 'muon_data_energy_loss.pkl'
+pickle_file = '../../data/muon_data_energy_loss.pkl'
 
 try:
     with gzip.open(pickle_file, 'rb') as f:

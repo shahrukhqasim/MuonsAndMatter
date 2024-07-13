@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 
 
-pickle_file = 'muon_data_energy_loss.pkl'
+pickle_file = '../../data/muon_data_energy_loss.pkl'
 
 try:
     with gzip.open(pickle_file, 'rb') as f:
@@ -46,5 +46,5 @@ to_save  = {
     'step_length': step_length_values,
 }
 
-with gzip.open('output.pkl', 'wb') as f:
+with gzip.open('../../data/output.pkl', 'wb') as f:
     pickle.dump(to_save, f)
