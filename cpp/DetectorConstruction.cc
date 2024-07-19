@@ -33,10 +33,16 @@
 
 #include <iostream>
 
+DetectorConstruction::DetectorConstruction(Json::Value detectoData)
+        : G4VUserDetectorConstruction()
+{
+    this->detectorData = detectoData;
+}
+
 DetectorConstruction::DetectorConstruction()
 : G4VUserDetectorConstruction()
 {
-
+    this->detectorData = Json::Value();
 }
 
 DetectorConstruction::~DetectorConstruction()
@@ -48,14 +54,18 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     double limit_world_time_max_=5000*ns;
     double limit_world_energy_max_=100*eV;
 
-    // Create a user limits object with a maximum step size of 1 mm
-    G4double maxStep = 5 * cm;
-    G4UserLimits* userLimits =new G4UserLimits(maxStep);
-//    G4UserLimits* userLimits =new G4UserLimits(
-//	        DBL_MAX, //max step length
-//            10*mm, //max track length
-//            limit_world_time_max_, //max track time
-//            limit_world_energy_max_);
+
+    G4double maxTrackLength = DBL_MAX; // No limit on track length
+    G4double maxStepLength = DBL_MAX;  // No limit on step length
+    if (not detectorData.empty())
+        maxStepLength = detectorData["max_step_length"].asDouble() * m;
+    maxTrackLength = DBL_MAX;
+    G4double maxTime = DBL_MAX;        // No limit on time
+    G4double minKineticEnergy = 100 * MeV; // Minimum kinetic energy
+
+    // Create an instance of G4UserLimits
+    G4UserLimits* userLimits2 = new G4UserLimits(maxStepLength, maxTrackLength, maxTime, minKineticEnergy);
+
 
     // Get NIST material manager
     G4NistManager* nist = G4NistManager::Instance();
@@ -77,7 +87,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     // Create the world volume
     G4Box* solidWorld = new G4Box("WorldX", worldSizeXY / 2, worldSizeXY / 2, worldSizeZ / 2);
     G4LogicalVolume* logicWorld = new G4LogicalVolume(solidWorld, worldMaterial, "WorldY");
-    logicWorld->SetUserLimits(userLimits);
+    logicWorld->SetUserLimits(userLimits2);
 
     G4VPhysicalVolume* physWorld = new G4PVPlacement(0, G4ThreeVector(), logicWorld, "WorldZ", 0, false, 0, true);
 
@@ -89,7 +99,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
 
     // Associate the user limits with a logical volume
-    logicSphere->SetUserLimits(userLimits);
+    logicSphere->SetUserLimits(userLimits2);
 
 
     new G4PVPlacement(0, G4ThreeVector(), logicSphere, "SphereZ", logicWorld, false, 0, true);

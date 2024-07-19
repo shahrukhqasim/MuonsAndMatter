@@ -12,7 +12,7 @@ class GDetectorConstruction : public DetectorConstruction {
 public:
     virtual G4VPhysicalVolume *Construct();
 public:
-    GDetectorConstruction(std::string detector_data);
+    GDetectorConstruction(Json::Value detector_data);
 protected:
     Json::Value detectorData;
 public:

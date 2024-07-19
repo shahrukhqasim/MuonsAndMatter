@@ -1,11 +1,17 @@
+import json
 import time
 
 import numpy as np
 from tqdm import tqdm
 from lib.matplotlib_settings import *
 import csv
+from lib.magnet_params.params_design_9 import *
 
-file_path = '../../data/momentums_positions.csv'
+z_bias = 50
+detector = get_design(z_bias=z_bias)
+
+
+file_path = 'data/momentums_positions.csv'
 
 with open(file_path, mode='r') as file:
     csv_reader = csv.reader(file)
@@ -29,7 +35,7 @@ from muon_slabs import simulate_muon, initialize, collect, set_field_value, kill
 
 
 # Initialize muon simulation
-initialize(0, 4, 4, 5, 0, "")
+initialize(0, 4, 4, 5, 0, json.dumps(detector))
 
 set_field_value(1,0,0)
 # set_kill_momenta(65)
@@ -72,7 +78,7 @@ def run_test(kill_secondary, num_tests, num_muons, momenta_value):
         t1 = time.time()
         for _ in range(num_muons):
             # t2 = time.time()
-            simulate_muon(0, momenta_value, 0, 1, 0, 0, 0)
+            simulate_muon(0, 0, momenta_value, 1, 0, 0, -20)
             # print("Took ", time.time() - t2, "seconds")
             data = collect()
             # muon_data.append(data)
@@ -90,7 +96,7 @@ def run_test_given_momenta_values(kill_secondary, num_tests, momenta_values):
         t1 = time.time()
         for momenta_value in momenta_values:
             print(momenta_value)
-            simulate_muon(0, momenta_value, 0, 1, 0, 0, 0)
+            simulate_muon(0, 0, momenta_value, 1, 0, 0, -20)
             data = collect()
             # muon_data.append(data)
         # print("Took ", time.time() - t1, "seconds")
@@ -143,7 +149,7 @@ str = ("Same dist: kill_secondary=%d took %f seconds (%s for 10**5 * 4.5)"%(kill
 cached_strs.append(str)
 
 results_collected = []
-kill_secondary = True
+kill_secondary = False
 results = run_test_given_momenta_values(kill_secondary, num_tests, p_mag)
 seconds_ = np.mean(results) / len(p_mag)
 seconds_for_full = seconds_ * 10**5 * 4.5

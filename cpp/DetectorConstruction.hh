@@ -10,13 +10,14 @@ class DetectorConstruction : public G4VUserDetectorConstruction
 {
 public:
     DetectorConstruction();
+    DetectorConstruction(Json::Value detectorData);
     virtual ~DetectorConstruction();
 
     virtual G4VPhysicalVolume* Construct();
     virtual void setMagneticFieldValue(double strength, double theta, double phi);
 protected:
     G4UniformMagField* magField;
-
+    Json::Value detectorData;
 };
 
 #endif

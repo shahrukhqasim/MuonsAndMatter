@@ -12,7 +12,7 @@ class BoxyDetectorConstruction : public DetectorConstruction {
 public:
     virtual G4VPhysicalVolume *Construct();
 public:
-    BoxyDetectorConstruction(std::string detector_data);
+    BoxyDetectorConstruction(Json::Value detector_data);
 protected:
     Json::Value detectorData;
 public:

@@ -19,6 +19,11 @@
 #include <G4UIExecutive.hh>
 #include "QGSP_BERT.hh"
 #include "GDetectorConstruction.hh"
+#include "SlimFilm.hh"
+#include "json/json.h"
+#include <iostream>
+#include <sstream>
+
 
 namespace py = pybind11;
 using namespace py::literals;
@@ -113,7 +118,7 @@ void set_kill_momenta(double kill_momenta) {
 }
 
 void initialize( int rseed_0,
-                 int rseed_1, int rseed_2, int rseed_3, int type, std::string detector_specs) {
+                 int rseed_1, int rseed_2, int rseed_3, std::string detector_specs) {
     randomEngine = new CLHEP::MTwistEngine(rseed_0);
 
 
@@ -124,21 +129,50 @@ void initialize( int rseed_0,
 
     runManager = new G4RunManager;
 
-    if (detector_specs.size()==0)
+
+    bool applyStepLimiter = false;
+    if (detector_specs.empty())
         detector = new DetectorConstruction();
-    else if(type==0)
-        detector = new BoxyDetectorConstruction(detector_specs);
-    else if (type==1)
-        detector = new GDetectorConstruction(detector_specs);
-    else
-        throw std::runtime_error("Invalid detector type specified.");
+    else {
+        std::cout<<"Exa check \n";
+        Json::Value detectorData;
+        Json::CharReaderBuilder readerBuilder;
+        std::string errs;
+
+        std::istringstream iss(detector_specs);
+        if (Json::parseFromStream(readerBuilder, iss, &detectorData, &errs)) {
+            // Output the parsed JSON object
+            std::cout << detectorData["worldSizeX"] << std::endl;
+        } else {
+            std::cerr << "Failed to parse JSON: " << errs << std::endl;
+        }
+
+
+        int type = detectorData["type"].asInt();
+        applyStepLimiter = (detectorData["max_step_length"].asDouble() > 0);
+        if (type==3) {
+            detector = new DetectorConstruction(detectorData);
+        }
+        else if (type == 0)
+            detector = new BoxyDetectorConstruction(detectorData);
+        else if (type == 1)
+            detector = new GDetectorConstruction(detectorData);
+        else if (type == 2) {
+            detector = new SlimFilm(detectorData);
+        } else
+            throw std::runtime_error("Invalid detector type specified.");
+    }
 
     std::cout<<"Detector initializing..."<<std::endl;
+    std::cout<<"Step limiter physics applied: "<<applyStepLimiter<<std::endl;
     runManager->SetUserInitialization(detector);
 
     auto physicsList = new FTFP_BERT;
+//    auto physicsList = new QGSP_BERT_HP_PEN();
 //    auto physicsList = new QGSP_BERT;
-//    physicsList->RegisterPhysics(new G4StepLimiterPhysics());
+    if (applyStepLimiter) {
+        physicsList->RegisterPhysics(new G4StepLimiterPhysics());
+    }
     runManager->SetUserInitialization(physicsList);
 
     customEventAction = new CustomEventAction();

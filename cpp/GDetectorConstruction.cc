@@ -47,8 +47,20 @@ G4VPhysicalVolume *GDetectorConstruction::Construct() {
     double limit_world_energy_max_ = 100 * eV;
 
     // Create a user limits object with a maximum step size of 1 mm
-    G4double maxStep = 5 * cm;
-    G4UserLimits* userLimits = new G4UserLimits(maxStep);
+//    G4double maxStep = 5 * cm;
+//    G4UserLimits* userLimits = new G4UserLimits(maxStep);
+
+    // Define the user limits
+    G4double maxTrackLength = DBL_MAX; // No limit on track length
+    G4double maxStepLength = DBL_MAX;  // No limit on step length
+    maxStepLength = detectorData["max_step_length"].asDouble() * m;
+    maxTrackLength = DBL_MAX;
+    G4double maxTime = DBL_MAX;        // No limit on time
+    G4double minKineticEnergy = 100 * MeV; // Minimum kinetic energy
+
+    // Create an instance of G4UserLimits
+    G4UserLimits* userLimits2 = new G4UserLimits(maxStepLength, maxTrackLength, maxTime, minKineticEnergy);
+
 
     // Get NIST material manager
     G4NistManager* nist = G4NistManager::Instance();
@@ -67,7 +79,8 @@ G4VPhysicalVolume *GDetectorConstruction::Construct() {
     // Create the world volume
     G4Box* solidWorld = new G4Box("WorldX", worldSizeX / 2, worldSizeY / 2, worldSizeZ / 2);
     G4LogicalVolume* logicWorld = new G4LogicalVolume(solidWorld, worldMaterial, "WorldY");
-    logicWorld->SetUserLimits(userLimits);
+    logicWorld->SetUserLimits(userLimits2);
+//    logicWorld->SetUserLimits(userLimits);
 
     G4VPhysicalVolume* physWorld = new G4PVPlacement(0, G4ThreeVector(worldPositionX, worldPositionY, worldPositionZ), logicWorld, "WorldZ", 0, false, 0, true);
 
@@ -130,8 +143,10 @@ G4VPhysicalVolume *GDetectorConstruction::Construct() {
             // Continue with your existing code
             auto genericV = new G4GenericTrap(G4String("sdf"), dz, corners_two);
             auto logicG = new G4LogicalVolume(genericV, boxMaterial, "gggvl");
-            logicG->SetFieldManager(thingFieldManager, false);
+            logicG->SetFieldManager(thingFieldManager, true);
             new G4PVPlacement(0, G4ThreeVector(0, 0, z_center), logicG, "BoxZ", logicWorld, false, 0, true);
+            logicG->SetUserLimits(userLimits2);
+
 
 //            break;
         }
@@ -165,18 +180,8 @@ G4VPhysicalVolume *GDetectorConstruction::Construct() {
 
 
 
-GDetectorConstruction::GDetectorConstruction(std::string detector_data) {
-    Json::CharReaderBuilder readerBuilder;
-    std::string errs;
-
-    std::istringstream iss(detector_data);
-    if (Json::parseFromStream(readerBuilder, iss, &detectorData, &errs)) {
-        // Output the parsed JSON object
-        std::cout << detectorData["worldSizeX"] << std::endl;
-    } else {
-        std::cerr << "Failed to parse JSON: " << errs << std::endl;
-    }
-
+GDetectorConstruction::GDetectorConstruction(Json::Value detector_data) {
+    detectorData = detector_data;
 }
 
 void GDetectorConstruction::setMagneticFieldValue(double strength, double theta, double phi) {

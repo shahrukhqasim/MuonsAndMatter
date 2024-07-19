@@ -122,18 +122,8 @@ G4VPhysicalVolume *BoxyDetectorConstruction::Construct() {
 
 
 
-BoxyDetectorConstruction::BoxyDetectorConstruction(std::string detector_data) {
-    Json::CharReaderBuilder readerBuilder;
-    std::string errs;
-
-    std::istringstream iss(detector_data);
-    if (Json::parseFromStream(readerBuilder, iss, &detectorData, &errs)) {
-        // Output the parsed JSON object
-        std::cout << detectorData["worldSizeX"] << std::endl;
-    } else {
-        std::cerr << "Failed to parse JSON: " << errs << std::endl;
-    }
-
+BoxyDetectorConstruction::BoxyDetectorConstruction(Json::Value detector_data) {
+    detectorData = detector_data;
 }
 
 void BoxyDetectorConstruction::setMagneticFieldValue(double strength, double theta, double phi) {

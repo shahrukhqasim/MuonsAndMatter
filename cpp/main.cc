@@ -80,6 +80,19 @@ int main(int argc, char** argv)
 
     inputFile.close();
 
+    Json::Value detectorData;
+    Json::CharReaderBuilder readerBuilder;
+    std::string errs;
+
+    std::istringstream iss(fileContents);
+    if (Json::parseFromStream(readerBuilder, iss, &detectorData, &errs)) {
+        // Output the parsed JSON object
+        std::cout << detectorData["worldSizeX"] << std::endl;
+    } else {
+        std::cerr << "Failed to parse JSON: " << errs << std::endl;
+    }
+
+
     // Set mandatory initialization classes
     runManager->SetUserInitialization(new GDetectorConstruction(fileContents));
 //    runManager->SetUserInitialization(new BoxyDetectorConstruction(fileContents));

@@ -28,6 +28,8 @@ set(SOURCE_FILES
         CustomEventAction.cc
         BoxyDetectorConstruction.cc
         GDetectorConstruction.cc
+        SlimFilm.cc
+        SlimFilmSensitiveDetector.cc
         )
 
 
