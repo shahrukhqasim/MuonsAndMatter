@@ -59,7 +59,8 @@ G4VPhysicalVolume *GDetectorConstruction::Construct() {
     G4double minKineticEnergy = 100 * MeV; // Minimum kinetic energy
 
     // Create an instance of G4UserLimits
-    G4UserLimits* userLimits2 = new G4UserLimits(maxStepLength, maxTrackLength, maxTime, minKineticEnergy);
+    G4UserLimits* userLimits2 = getLimitsFromDetectorConfig(detectorData);
+    std::cout<<"Initializing Muon shield design...\n";
 
 
     // Get NIST material manager

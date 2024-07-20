@@ -34,7 +34,8 @@ pz = pz[filt]*0+100
 with open('data/gdetector.json', 'w') as f:
     json.dump(detector, f)
 
-detector["max_step_length"] = 0.05
+detector["max_step_length"] = 0.05 # meter
+detector["minimum_kinetic_energy"] = 0.1 # GeV
 initialize(np.random.randint(256), np.random.randint(256), np.random.randint(256), np.random.randint(256), json.dumps(detector))
 
 # set_field_value(1,0,0)
@@ -63,19 +64,29 @@ zpos = -20
 charge = np.random.randint(2, size=N_samples)
 charge[charge == 0] = -1
 
-
-for i in range(N_samples):
-    if const:
-        charge = np.random.randint(2)
-        if charge == 0:
-            charge = -1
-        print(charge)
-        simulate_muon(0, 0, 20, charge, np.random.normal(0, 0.05), np.random.normal(0, 0.05), zpos)
-    else:
-        simulate_muon(px[i], py[i], pz[i], charge[i], np.random.normal(0, 0.05), np.random.normal(0, 0.05), zpos)
+def simulate_muon_(*args):
+    global muon_data
+    simulate_muon(*args)
     data = collect()
-    print("X", data['step_length'])
     muon_data += [data]
+
+
+simulate_muon_(0, 0, 100, -1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
+simulate_muon_(0, 0, 50, -1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
+simulate_muon_(0, 0, 70, +1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
+#
+# for i in range(N_samples):
+#     if const:
+#         charge = np.random.randint(2)
+#         if charge == 0:
+#             charge = -1
+#         print(charge)
+#         simulate_muon(0, 0, 20, charge, np.random.normal(0, 0.05), np.random.normal(0, 0.05), zpos)
+#     else:
+#         simulate_muon(px[i], py[i], pz[i], charge[i], np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
+#     data = collect()
+#     print("X", data['step_length'])
+#     muon_data += [data]
 #
 # 0/0
 
@@ -96,9 +107,9 @@ for mag in magnets:
         if field[0] < 0:
             col = 'red'
         elif field[0] > 0:
-            col = 'red'
-        elif field[1] < 0:
             col = 'green'
+        elif field[1] < 0:
+            col = 'red'
         elif field[1] > 0:
             col = 'green'
         elif field[2] < 0:

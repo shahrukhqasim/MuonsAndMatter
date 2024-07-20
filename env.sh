@@ -1,0 +1,1 @@
+export PYTHONPATH=$PYTHONPATH:`readlink -f python`:`readlink -f cpp/build`

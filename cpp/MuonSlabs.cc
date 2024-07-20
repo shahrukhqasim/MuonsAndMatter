@@ -149,7 +149,7 @@ void initialize( int rseed_0,
 
 
         int type = detectorData["type"].asInt();
-        applyStepLimiter = (detectorData["max_step_length"].asDouble() > 0);
+        applyStepLimiter = (detectorData["limits"]["max_step_length"].asDouble() > 0);
         if (type==3) {
             detector = new DetectorConstruction(detectorData);
         }
@@ -164,12 +164,12 @@ void initialize( int rseed_0,
     }
 
     std::cout<<"Detector initializing..."<<std::endl;
-    std::cout<<"Step limiter physics applied: "<<applyStepLimiter<<std::endl;
     runManager->SetUserInitialization(detector);
 
     auto physicsList = new FTFP_BERT;
 //    auto physicsList = new QGSP_BERT_HP_PEN();
 //    auto physicsList = new QGSP_BERT;
+    std::cout<<"Step limiter physics applied: "<<applyStepLimiter<<std::endl;
     if (applyStepLimiter) {
         physicsList->RegisterPhysics(new G4StepLimiterPhysics());
     }

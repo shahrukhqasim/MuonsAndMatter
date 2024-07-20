@@ -7,6 +7,7 @@
 
 #include "DetectorConstruction.hh"
 #include "json/json.h"
+#include "G4UserLimits.hh"
 
 class BoxyDetectorConstruction : public DetectorConstruction {
 public:

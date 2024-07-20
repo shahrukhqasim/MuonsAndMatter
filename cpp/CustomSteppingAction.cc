@@ -108,6 +108,7 @@ void CustomSteppingAction::UserSteppingAction(const G4Step* step)
 //               << G4endl;
 //    }
 
+
     if (track->GetTrackID() == primaryTrackId) {
         G4ThreeVector position2 = track->GetPosition();
 

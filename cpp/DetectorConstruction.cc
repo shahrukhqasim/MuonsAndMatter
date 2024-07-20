@@ -48,32 +48,38 @@ DetectorConstruction::DetectorConstruction()
 DetectorConstruction::~DetectorConstruction()
 { }
 
-G4VPhysicalVolume* DetectorConstruction::Construct()
-
-{
-    double limit_world_time_max_=5000*ns;
-    double limit_world_energy_max_=100*eV;
-
-
+G4UserLimits * DetectorConstruction::getLimitsFromDetectorConfig(const Json::Value& detectorData) {
     G4double maxTrackLength = DBL_MAX; // No limit on track length
     G4double maxStepLength = DBL_MAX;  // No limit on step length
-    if (not detectorData.empty())
-        maxStepLength = detectorData["max_step_length"].asDouble() * m;
+    if (not detectorData.empty()) {
+        G4double temp = detectorData["limits"]["max_step_length"].asDouble() * m;
+        if (temp > 0)
+            maxStepLength = temp;
+    }
     maxTrackLength = DBL_MAX;
     G4double maxTime = DBL_MAX;        // No limit on time
+
     G4double minKineticEnergy = 100 * MeV; // Minimum kinetic energy
+    if (not detectorData.empty()) {
+        G4double temp = detectorData["limits"]["minimum_kinetic_energy"].asDouble() * GeV;
+        if (temp > 0)
+            minKineticEnergy = temp;
+    }
 
     // Create an instance of G4UserLimits
     G4UserLimits* userLimits2 = new G4UserLimits(maxStepLength, maxTrackLength, maxTime, minKineticEnergy);
+    return userLimits2;
+}
 
+G4VPhysicalVolume* DetectorConstruction::Construct() {
+    G4UserLimits* userLimits2 = getLimitsFromDetectorConfig(detectorData);
 
     // Get NIST material manager
     G4NistManager* nist = G4NistManager::Instance();
 
     // Define the material
     G4Material* sphereMaterial = nist->FindOrBuildMaterial("G4_Fe");
-    std::cout << "Srq: " << *sphereMaterial << std::endl;
-
+    std::cout << "Placing gigantic sphere: " << *sphereMaterial << std::endl;
 
 
     // Define the radius of the sphere

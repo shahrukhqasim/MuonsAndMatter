@@ -3,7 +3,8 @@
 Warning: The repository is still in very initial phases of development and can change
 really quickly.
 
-![](/Users/shahrukhqasim/workspace/uzh/MuonThroughMatterStudies/images/shield.png)
+<img src="images/shield.png" alt="Muon Shield Visualization" width="400"/>
+
 
 ## Running
 Download simcontainer2.sif from the following location:
