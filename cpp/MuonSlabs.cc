@@ -69,6 +69,7 @@ py::dict collect() {
     std::vector<double>& x = steppingAction->x;
     std::vector<double>& y = steppingAction->y;
     std::vector<double>& z = steppingAction->z;
+    std::vector<int>& trackId = steppingAction->trackId;
 
     std::vector<double>& stepLength = steppingAction->stepLength;
     std::vector<double>& chargeDeposit = steppingAction->chargeDeposit;
@@ -84,6 +85,8 @@ py::dict collect() {
     std::vector<double> stepLength_copy(stepLength.begin(), stepLength.end());
     std::vector<double> chargeDeposit_copy(chargeDeposit.begin(), chargeDeposit.end());
 
+    std::vector<int> trackId_copy(trackId.begin(), trackId.end());
+
     py::array np_px = py::cast(px_copy);
     py::array np_py = py::cast(py_copy);
     py::array np_pz = py::cast(pz_copy);
@@ -94,6 +97,7 @@ py::dict collect() {
 
     py::array np_stepLength = py::cast(stepLength_copy);
     py::array np_chargeDeposit = py::cast(chargeDeposit_copy);
+    py::array np_trackId = py::cast(trackId);
 
     py::dict d = py::dict(
             "px"_a = np_px,
@@ -103,7 +107,8 @@ py::dict collect() {
             "y"_a = np_y,
             "z"_a = np_z,
             "step_length"_a = np_stepLength,
-            "charge_deposit"_a = np_chargeDeposit
+            "charge_deposit"_a = np_chargeDeposit,
+            "track_id"_a = np_trackId
     );
 
     return d;
@@ -131,6 +136,7 @@ void initialize( int rseed_0,
 
 
     bool applyStepLimiter = false;
+    bool storeAll = false;
     if (detector_specs.empty())
         detector = new DetectorConstruction();
     else {
@@ -161,6 +167,10 @@ void initialize( int rseed_0,
             detector = new SlimFilm(detectorData);
         } else
             throw std::runtime_error("Invalid detector type specified.");
+
+        if (detectorData.isMember("store_all")) {
+            storeAll = detectorData["store_all"].asBool();
+        }
     }
 
     std::cout<<"Detector initializing..."<<std::endl;
@@ -180,6 +190,7 @@ void initialize( int rseed_0,
     steppingAction = new CustomSteppingAction();
     primariesGenerator->setSteppingAction(steppingAction);
     customEventAction->setSteppingAction(steppingAction);
+    steppingAction->setStoreAll(storeAll);
 
 //    auto actionInitialization = new B4aActionInitialization(detector, eventAction, primariesGenerator);
 //    runManager->SetUserInitialization(actionInitialization);
@@ -190,6 +201,8 @@ void initialize( int rseed_0,
 
     // Get the pointer to the User Interface manager
     ui_manager = G4UImanager::GetUIpointer();
+
+
 
 
     ui_manager->ApplyCommand(std::string("/run/initialize"));

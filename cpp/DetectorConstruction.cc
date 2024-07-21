@@ -66,6 +66,9 @@ G4UserLimits * DetectorConstruction::getLimitsFromDetectorConfig(const Json::Val
             minKineticEnergy = temp;
     }
 
+
+
+
     // Create an instance of G4UserLimits
     G4UserLimits* userLimits2 = new G4UserLimits(maxStepLength, maxTrackLength, maxTime, minKineticEnergy);
     return userLimits2;

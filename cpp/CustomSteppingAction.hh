@@ -20,7 +20,12 @@ public:
 private:
     G4EventManager* eventManager;
     G4Event* event;
+    int primaryTrackId;
 
+    double killMomenta;
+    bool killSecondary;
+
+    bool store_all;
 
 public:
     // Add any necessary members here
@@ -34,11 +39,12 @@ public:
 
     std::vector<double> stepLength;
     std::vector<double> chargeDeposit;
+    std::vector<int> trackId;
 
-    int primaryTrackId;
 
-    double killMomenta;
-    bool killSecondary;
+    void setStoreAll(bool storeAll);
+
+
 
     void setKillMomenta(double killMomenta);
 

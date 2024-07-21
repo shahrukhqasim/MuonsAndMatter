@@ -17,7 +17,8 @@ def run_test(workload):
     z_bias = 50
     detector = get_design(z_bias=z_bias)
     detector['limits']['minimum_kinetic_energy'] =  0.1 # GeV
-    detector['limits']['max_step_length'] = 0.005 # 5 cm
+    detector['limits']['max_step_length'] = 0.05 # 5 cm
+    # detector['store_all'] = True
     detector = json.dumps(detector)
 
 

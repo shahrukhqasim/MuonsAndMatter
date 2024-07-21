@@ -15,8 +15,8 @@ import pickle
 z_bias = 50
 detector = get_design(z_bias=z_bias, force_remove_magnetic_field=False)
 
-with gzip.open('data/oliver_data_enriched_from_design_9.pkl', 'rb') as f:
-# with gzip.open('data/oliver_data_enriched.pkl', 'rb') as f:
+# with gzip.open('data/oliver_data_enriched_from_design_9.pkl', 'rb') as f:
+with gzip.open('data/oliver_data_enriched.pkl', 'rb') as f:
     data = pickle.load(f)
 
 px = data[:, 0]
@@ -36,7 +36,9 @@ with open('data/gdetector.json', 'w') as f:
 
 detector["max_step_length"] = 0.05 # meter
 detector["minimum_kinetic_energy"] = 0.1 # GeV
+# detector["store_all"] = True
 initialize(np.random.randint(256), np.random.randint(256), np.random.randint(256), np.random.randint(256), json.dumps(detector))
+
 
 # set_field_value(1,0,0)
 # set_kill_momenta(65)
@@ -68,6 +70,7 @@ def simulate_muon_(*args):
     global muon_data
     simulate_muon(*args)
     data = collect()
+    print(data)
     muon_data += [data]
 
 
@@ -170,7 +173,10 @@ ax.set_zlim(-20, 20)
 ax.set_xlabel('Z (m)')
 ax.set_ylabel('X (m)')
 ax.set_zlabel('Y (m)')
-
+ax.view_init(elev=17., azim=126)
 fig.tight_layout()
+
+fig.savefig('plots/detector_visualization.png', dpi=600)
+
 plt.show()
 

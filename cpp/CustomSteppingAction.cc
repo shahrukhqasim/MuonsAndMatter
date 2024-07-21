@@ -25,6 +25,7 @@ CustomSteppingAction::CustomSteppingAction()
     killMomenta = -1;
     max_momenta_diff = -1;
     killSecondary = false;
+    store_all = false;
 }
 
 CustomSteppingAction::~CustomSteppingAction()
@@ -49,19 +50,6 @@ void CustomSteppingAction::UserSteppingAction(const G4Step* step)
     // Get the position of the step
     G4ThreeVector pos = step->GetPostStepPoint()->GetPosition();
 
-//    // Print step information for debug
-//    G4cout << "Track ID: " << track->GetTrackID()
-//           << " Volume: " << volume->GetName()
-//           << " Kinetic Energy: " << G4BestUnit(kineticEnergy, "Energy")
-//           << " Energy Deposit: " << G4BestUnit(edep, "Energy")
-//           << " Position: " << G4BestUnit(pos, "Length")
-//           << G4endl;
-
-    // Example of custom logic: stop the track if it deposits energy above a threshold
-//    if (edep > 1.0*MeV)
-//    {
-//        track->SetTrackStatus(fStopAndKill);
-//    }
     num_steps += 1;
 
     G4StepPoint* preStepPoint = step->GetPreStepPoint();
@@ -78,38 +66,11 @@ void CustomSteppingAction::UserSteppingAction(const G4Step* step)
     // Define a vector to hold the field value
     G4ThreeVector fieldValue;
 
-
-//    // Check if the field manager and its field are valid
-//    if (fieldManager && fieldManager->GetDetectorField())
-//    {
-//        // Get the field value at the current position
-//        fieldManager->GetDetectorField()->GetFieldValue(position, &fieldValue[0]);
-//
-//        // Print the magnetic field strength
-//        G4cout << "Magnetic field at step: "
-//               << fieldValue / tesla << " Tesla" << G4endl;
-//    }
-//    else {
-//        G4cout << "No magnetic field found in the stepping action.\n";
-//    }
-
     G4ThreeVector momentum = track->GetMomentum();
 
-//    std::cout<<track->GetPDGID()
-
-//     G4cout << "Step length: " << step->GetStepLength() / mm << " mm" << G4endl;
-
-//    if (momentum.mag() / GeV > 40) {
-//        G4cout << "(" << momentum.x() / GeV << " GeV/c, "
-//               << momentum.y() / GeV << " GeV/c, "
-//               << momentum.z() / GeV << " GeV/c) and track id "
-//               << track->GetTrackID() << " and step size "
-//               << step->GetStepLength() / mm << " mm"
-//               << G4endl;
-//    }
 
 
-    if (track->GetTrackID() == primaryTrackId) {
+    if (track->GetTrackID() == primaryTrackId or store_all) {
         G4ThreeVector position2 = track->GetPosition();
 
         // Fill the vectors with current step data
@@ -120,40 +81,23 @@ void CustomSteppingAction::UserSteppingAction(const G4Step* step)
         x.push_back(position2.x() / m);
         y.push_back(position2.y() / m);
         z.push_back(position2.z() / m);
+        trackId.push_back(track->GetTrackID());
 
         stepLength.push_back(step->GetStepLength() / m);
         chargeDeposit.push_back(step->GetTotalEnergyDeposit());
-
-        // Calculate the current momenta magnitude
-        double current_momentum_mag = momentum.mag() / GeV;
-
-        // Compute the difference in momenta magnitude if px size is greater than 0
-        if (px.size() > 1) {
-            double previous_momentum_mag = sqrt(px[px.size() - 2] * px[px.size() - 2] +
-                                                py[py.size() - 2] * py[py.size() - 2] +
-                                                pz[pz.size() - 2] * pz[pz.size() - 2]);
-
-            double new_diff = current_momentum_mag - previous_momentum_mag;
-
-            // Update max_momenta_diff if new_diff is greater
-            if (fabs(new_diff) > max_momenta_diff) {
-                max_momenta_diff = fabs(new_diff);
-//                std::cout << "New max momenta diff: " << max_momenta_diff << " "<<previous_momentum_mag<<" "<<current_momentum_mag<< std::endl;
-            }
-        }
-
-        if (killMomenta > 0) {
-            if (momentum.mag() / GeV < killMomenta) {
-//                std::cout<<"Killing because found moments is "<<momentum.mag() / GeV<<" GeV and to be killed at "<<killMomenta<<"\n";
-                track->SetTrackStatus(fStopAndKill);
-            }
-        }
     }
     else if (killSecondary) {
         track->SetTrackStatus(fStopAndKill);
     }
     else {
 
+    }
+
+    if (killMomenta > 0) {
+        if (momentum.mag() / GeV < killMomenta) {
+//                std::cout<<"Killing because found moments is "<<momentum.mag() / GeV<<" GeV and to be killed at "<<killMomenta<<"\n";
+            track->SetTrackStatus(fStopAndKill);
+        }
     }
 
 
@@ -181,6 +125,7 @@ void CustomSteppingAction::clean() {
     z.clear();
     stepLength.clear();
     chargeDeposit.clear();
+    trackId.clear();
 //    std::cout<<"Cleaning!"<<std::endl;
 }
 
@@ -190,4 +135,8 @@ void CustomSteppingAction::setKillMomenta(double killMomenta) {
 
 void CustomSteppingAction::setKillSecondary(bool killSecondary) {
     CustomSteppingAction::killSecondary = killSecondary;
+}
+
+void CustomSteppingAction::setStoreAll(bool storeAll) {
+    store_all = storeAll;
 }
