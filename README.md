@@ -24,9 +24,41 @@ For other clusters, modify the commands accordingly. You should include every di
 you need access to from within the container with `-B` option.
 
 ```
+git clone git@github.com:shahrukhqasim/MuonsAndMatter.git
+```
+or 
+```
+git clone https://github.com/shahrukhqasim/MuonsAndMatter.git
+```
+
+```
+cd MuonsAndMatter
+git submodule update --init --remote --recursive
 cd MuonThroughMatter
 soure env.sh
 ```
+The following python script will give you the cmake command that you can use:
+```
+python3 chore/find_cmake_command.py
+```
+For me, it gave: 
+```
+Using python: /usr/bin/python3
+pybind11 found in: /home/hep/sqasim/.local/lib/python3.10/site-packages/pybind11/share/cmake/pybind11
+The following cmake command can be used:
+cmake -Dpybind11_DIR=/home/hep/sqasim/.local/lib/python3.10/site-packages/pybind11/share/cmake/pybind11 -DPython_EXECUTABLE=/usr/bin/python3 the/path
+```
+Take node of the cmake command and run the following commands as per your username:
+
+```
+cd cpp/
+mkdir build
+cmake -Dpybind11_DIR=/home/hep/sqasim/.local/lib/python3.10/site-packages/pybind11/share/cmake/pybind11 -DPython_EXECUTABLE=/usr/bin/python3 ..
+make -j
+cd ../..
+```
+
+
 
 ## Running visually
 ```
