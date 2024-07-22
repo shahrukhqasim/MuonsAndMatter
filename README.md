@@ -40,8 +40,7 @@ git clone https://github.com/shahrukhqasim/MuonsAndMatter.git
 ```
 cd MuonsAndMatter
 git submodule update --init --remote --recursive
-cd MuonThroughMatter
-soure env.sh
+source env.sh
 ```
 The following python script will give you the cmake command that you can use:
 ```
