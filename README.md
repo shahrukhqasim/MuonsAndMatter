@@ -68,15 +68,19 @@ cmake -Dpybind11_DIR=/home/hep/sqasim/.local/lib/python3.10/site-packages/pybind
 make -j
 cd ../..
 ```
+## Data
+To start with, a collection of enriched data consisting of ~0.5M samples can be downloaded from the following location:
 
+[Data](https://uzh-my.sharepoint.com/:f:/r/personal/shahrukh_qasim_physik_uzh_ch/Documents/MuonShield?csf=1&web=1&e=Dophg7)
 
+You should create a folder called data and put the pickle file there to be able to run the following two commands.
 
-## Running visually
+### Running visually
 ```
 python3 python/bin/run_full_detector_visually.py
 ```
 
-## Running multi-core
+### Running multi-core
 ```
 python3 python/bin/run_full_detector_multi_core_2.py --cores 45
 ```
