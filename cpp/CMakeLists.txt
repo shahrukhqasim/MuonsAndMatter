@@ -11,8 +11,11 @@ set(PYBIND11_FINDPYTHON ON)
 # Find pybind11
 find_package(pybind11 REQUIRED)
 find_package(Geant4 REQUIRED ui_all vis_all)
-include_directories(/Users/shahrukhqasim/workspace/uzh/Geant4-11.2.2/include/Geant4)
+set(GEANT4_INCLUDE_DIR "/some/random/path" CACHE PATH "Path to Geant4 include directory")
+
 include_directories(/usr/local/include/Geant4/)
+include_directories(${GEANT4_INCLUDE_DIR})
+
 
 
 # Add subdirectory for jsoncpp

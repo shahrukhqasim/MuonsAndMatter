@@ -23,6 +23,12 @@ singularity shell --nv -B /cvmfs -B /disk/users/`whoami` -B /run/user/21528 -B /
 For other clusters, modify the commands accordingly. You should include every directory
 you need access to from within the container with `-B` option.
 
+Running on the MacBook is also easy, the default binary release from Geant4 works fine. And the rest of the packages can
+be installed simply via pip3.
+
+
+Then, clone the repository (SSH / HTTPS):
+
 ```
 git clone git@github.com:shahrukhqasim/MuonsAndMatter.git
 ```
@@ -41,6 +47,11 @@ The following python script will give you the cmake command that you can use:
 ```
 python3 chore/find_cmake_command.py
 ```
+If you are running on a MacBook with a custom Geant4 installation:
+```
+python3 chore/find_cmake_command.py -g /path/to/Geant4-XX.X.X
+```
+
 For me, it gave: 
 ```
 Using python: /usr/bin/python3
