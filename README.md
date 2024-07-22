@@ -13,11 +13,11 @@ For non-GUI access (such as on servers), download simcontainer2.sif from the fol
 If you are using physik cluster, run the singularity container via the following commands:
 
 ```
-cd /disk/lhcb_data/`whoami`/images
+cd /disk/lhcb_data/sqasim/images
 . /disk/lhcb/scripts/lhcb_setup.sh
 export SINGULARITY_TMPDIR=/disk/users/`whoami`/temp
 export TMPDIR=/disk/users/`whoami`/tmp
-singularity shell --nv -B /cvmfs -B /disk/users/`whoami` -B /run/user/21528 -B /home/hep/`whoami` simcontainer.sif
+singularity shell --nv -B /cvmfs -B /disk/users/`whoami` -B /run/user/21528 -B /home/hep/`whoami` simcontainer2.sif
 ```
 
 For other clusters, modify the commands accordingly. You should include every directory
@@ -40,8 +40,7 @@ git clone https://github.com/shahrukhqasim/MuonsAndMatter.git
 ```
 cd MuonsAndMatter
 git submodule update --init --remote --recursive
-cd MuonThroughMatter
-soure env.sh
+source env.sh
 ```
 The following python script will give you the cmake command that you can use:
 ```
