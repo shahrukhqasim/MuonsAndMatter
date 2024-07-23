@@ -63,6 +63,7 @@ Take node of the cmake command and run the following commands as per your userna
 ```
 cd cpp/
 mkdir build
+cd build
 cmake -Dpybind11_DIR=/home/hep/sqasim/.local/lib/python3.10/site-packages/pybind11/share/cmake/pybind11 -DPython_EXECUTABLE=/usr/bin/python3 ..
 make -j
 cd ../..
