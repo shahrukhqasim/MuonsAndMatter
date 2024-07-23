@@ -7,7 +7,7 @@ from muon_slabs import simulate_muon, initialize, collect, kill_secondary_tracks
 from numba import jit
 from numba.typed import List, Dict
 from tqdm import tqdm
-from lib.magnet_params.params_design_9 import get_design
+from lib.reference_designs.params_design_9 import get_design
 import matplotlib.pyplot as plt
 import time
 from lib.matplotlib_settings import *

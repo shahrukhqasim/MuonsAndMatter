@@ -6,7 +6,7 @@ import numpy as np
 from tqdm import tqdm
 from lib.matplotlib_settings import *
 import csv
-import lib.magnet_params.params_design_9 as design_9
+import lib.reference_designs.params_design_9 as design_9
 import lib.gigantic_sphere as sphere_design
 from muon_slabs import simulate_muon, initialize, collect, set_field_value, kill_secondary_tracks
 from lib.timelib import convert_seconds
