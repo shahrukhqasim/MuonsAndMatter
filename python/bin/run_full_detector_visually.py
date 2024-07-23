@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from muon_slabs import simulate_muon, initialize, collect, kill_secondary_tracks
 from lib.magnet_params.params_design_9 import *
+from lib.magnet_params.params_design_8 import get_design as get_design_8
 # from magnet_paramsX import *
 import time
 from tqdm import tqdm
@@ -13,7 +14,9 @@ import pickle
 
 
 z_bias = 50
-detector = get_design(z_bias=z_bias, force_remove_magnetic_field=False)
+# Design 8 is built directly from the parameters and using similar code, shield optimizations can be performed
+# detector = get_design(z_bias=z_bias, force_remove_magnetic_field=False)
+detector = get_design_8(z_bias=z_bias, force_remove_magnetic_field=False)
 
 # with gzip.open('data/oliver_data_enriched_from_design_9.pkl', 'rb') as f:
 with gzip.open('data/oliver_data_enriched.pkl', 'rb') as f:

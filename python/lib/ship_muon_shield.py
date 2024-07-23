@@ -1,3 +1,6 @@
+import json
+import time
+
 import numpy as np
 
 
@@ -8,7 +11,8 @@ def CreateArb8(arbName, medium, dZ, corners, color, magField, tShield, x_transla
         'corners' : corners,
         'field' : magField,
         'name': arbName,
-        'dZ' : dZ,
+        'dz' : dZ,
+        "z_center" : z_translation,
     })
 
 
@@ -36,7 +40,7 @@ def create_magnet(magnetName, medium, tShield,
     anti_overlap = 0.1 # gap between fields in the corners for mitred joints (Geant goes crazy when
     # they touch each other)
 
-    if SC_key:
+    if not SC_key:
         cornersMainL = np.array([
             middleGap, -(dY + dX - anti_overlap), middleGap, dY + dX - anti_overlap,
             dX + middleGap, dY - anti_overlap, dX + middleGap,
@@ -224,15 +228,20 @@ def create_magnet(magnetName, medium, tShield,
     else:
         raise RuntimeError("File direction value not recognized.")
 
+    theMagnet['dz'] = dZ
+    theMagnet['z_center'] = Z
+
     tShield['magnets'].append(theMagnet)
 
 
 def get_design(params):
-    m = 1
-    mm = 0.001
+    fSC_mag = True
     n_magnets = 9
-    cm = 0.1
-    tesla = 1
+    cm = 1
+    mm = 0.1 * cm
+    m = 100 * cm
+    tesla = 10
+    fField = 1.7
 
     magnetName = ["MagnAbsorb1", "MagnAbsorb2", "Magn1", "Magn2", "Magn3", "Magn4", "Magn5", "Magn6", "Magn7"]
 
@@ -251,6 +260,7 @@ def get_design(params):
     dZ7 = params[6]
     dZ8 = params[7]
     fMuonShieldLength = 2 * (dZ1 + dZ2 + dZ3 + dZ4 + dZ5 + dZ6 + dZ7 + dZ8) + LE
+
 
     dXIn = np.zeros(n_magnets)
     dXOut = np.zeros(n_magnets)
@@ -292,7 +302,7 @@ def get_design(params):
         gapIn[i] = params[offset + i * 6 + 5]
         gapOut[i] = params[offset + i * 6 + 6]
 
-    XXX = 100 # TODO: This needs to be checked
+    XXX = -25 * m - fMuonShieldLength / 2. # TODO: This needs to be checked
     zEndOfAbsorb = XXX - fMuonShieldLength / 2.
 
     dZf[0] = dZ1 - zgap / 2
@@ -344,15 +354,55 @@ def get_design(params):
                  dYOut[nM], dZf[nM], midGapIn[nM], midGapOut[nM], HmainSideMagIn[nM], HmainSideMagOut[nM],
                  gapIn[nM], gapOut[nM], Z[nM], True, False)
 
+    fieldScale = np.ones(9)
+    for nM in range(2, n_magnets):
+        if (dZf[nM] < 1e-5 or nM == 4) and fSC_mag:
+            continue
+        ironField_s_SC = fField * fieldScale[nM] * tesla
+        SC_key = False
+        if nM == 3 and fSC_mag:
+            SC_FIELD = 5.1
+            ironField_s_SC = SC_FIELD * fieldScale[nM] * tesla
+            SC_key = True
+        ironField_s = fField * fieldScale[nM] * tesla
+        magFieldIron_s = [0., ironField_s_SC, 0.]
+        RetField_s = [0., -ironField_s, 0.]
+        ConRField_s = [-ironField_s, 0., 0.]
+        ConLField_s = [ironField_s, 0., 0.]
+        fields_s = np.array([magFieldIron_s, RetField_s, ConRField_s, ConLField_s])
+
+        create_magnet(magnetName[nM], "G4_Fe", tShield, fields_s, fieldDirection[nM], dXIn[nM], dYIn[nM], dXOut[nM],
+                  dYOut[nM], dZf[nM], midGapIn[nM], midGapOut[nM], HmainSideMagIn[nM], HmainSideMagOut[nM],
+                  gapIn[nM], gapOut[nM], Z[nM], nM == 8, False, SC_key)
+
     return tShield
 
+def convert_numpy_to_list(obj):
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, dict):
+        return {k: convert_numpy_to_list(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_to_list(i) for i in obj]
+    else:
+        return obj
 
 if __name__ == "__main__":
-    params = np.array([70.0, 170.0, 208.0, 207.0, 281.0, 248.0, 305.0,
-              242.0, 40.0, 40.0, 150.0, 150.0, 2.0, 2.0, 80.0, 80.0, 150.0, 150.0, 2.0, 2.0,
-              72.0, 51.0, 29.0, 46.0, 10.0, 7.0, 54.0, 38.0, 46.0, 192.0, 14.0, 9.0, 10.0,
-              31.0, 35.0, 31.0, 51.0, 11.0, 3.0, 32.0, 54.0, 24.0, 8.0, 8.0, 22.0, 32.0,
-              209.0, 35.0, 8.0, 13.0, 33.0, 77.0, 85.0, 241.0, 9.0, 26.0])
+    # params = np.array([70.0, 170.0, 208.0, 207.0, 281.0, 248.0, 305.0,
+    #           242.0, 40.0, 40.0, 150.0, 150.0, 2.0, 2.0, 80.0, 80.0, 150.0, 150.0, 2.0, 2.0,
+    #           72.0, 51.0, 29.0, 46.0, 10.0, 7.0, 54.0, 38.0, 46.0, 192.0, 14.0, 9.0, 10.0,
+    #           31.0, 35.0, 31.0, 51.0, 11.0, 3.0, 32.0, 54.0, 24.0, 8.0, 8.0, 22.0, 32.0,
+    #           209.0, 35.0, 8.0, 13.0, 33.0, 77.0, 85.0, 241.0, 9.0, 26.0])
+    params = [70, 170, 0, 353.078, 125.083, 184.834, 150.193, 186.812, 40, 40, 150, 150, 2, 2, 80, 80, 150, 150, 2, 2,
+              72, 51, 29, 46, 10, 7, 45.6888, 45.6888, 22.1839, 22.1839, 27.0063, 16.2448, 10, 31, 35, 31, 51, 11,
+              24.7961, 48.7639, 8, 104.732, 15.7991, 16.7793, 3, 100, 192, 192, 2, 4.8004, 3, 100, 8, 172.729, 46.8285,
+              2]
 
+    t1 = time.time()
     shield = get_design(params)
+    print("Took", time.time() - t1, "seconds.")
     print(shield)
+    print(json.dumps(convert_numpy_to_list(shield)))
+
+    with open('data/shield.json', 'w') as f:
+        json.dump(convert_numpy_to_list(shield), f)
