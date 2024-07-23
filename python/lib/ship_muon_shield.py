@@ -234,7 +234,7 @@ def create_magnet(magnetName, medium, tShield,
     tShield['magnets'].append(theMagnet)
 
 
-def get_design(params):
+def design_muon_shield(params):
     fSC_mag = True
     n_magnets = 9
     cm = 1
@@ -377,32 +377,47 @@ def get_design(params):
 
     return tShield
 
-def convert_numpy_to_list(obj):
-    if isinstance(obj, np.ndarray):
-        return obj.tolist()
-    elif isinstance(obj, dict):
-        return {k: convert_numpy_to_list(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [convert_numpy_to_list(i) for i in obj]
-    else:
-        return obj
 
-if __name__ == "__main__":
-    # params = np.array([70.0, 170.0, 208.0, 207.0, 281.0, 248.0, 305.0,
-    #           242.0, 40.0, 40.0, 150.0, 150.0, 2.0, 2.0, 80.0, 80.0, 150.0, 150.0, 2.0, 2.0,
-    #           72.0, 51.0, 29.0, 46.0, 10.0, 7.0, 54.0, 38.0, 46.0, 192.0, 14.0, 9.0, 10.0,
-    #           31.0, 35.0, 31.0, 51.0, 11.0, 3.0, 32.0, 54.0, 24.0, 8.0, 8.0, 22.0, 32.0,
-    #           209.0, 35.0, 8.0, 13.0, 33.0, 77.0, 85.0, 241.0, 9.0, 26.0])
-    params = [70, 170, 0, 353.078, 125.083, 184.834, 150.193, 186.812, 40, 40, 150, 150, 2, 2, 80, 80, 150, 150, 2, 2,
-              72, 51, 29, 46, 10, 7, 45.6888, 45.6888, 22.1839, 22.1839, 27.0063, 16.2448, 10, 31, 35, 31, 51, 11,
-              24.7961, 48.7639, 8, 104.732, 15.7991, 16.7793, 3, 100, 192, 192, 2, 4.8004, 3, 100, 8, 172.729, 46.8285,
-              2]
+def get_design_from_params(params, z_bias=50., force_remove_magnetic_field=False):
+    mag_unit =  10.000000
+    # nMagnets 9
 
-    t1 = time.time()
-    shield = get_design(params)
-    print("Took", time.time() - t1, "seconds.")
-    print(shield)
-    print(json.dumps(convert_numpy_to_list(shield)))
+    shield = design_muon_shield(params)
+    # print(shield)
 
-    with open('data/shield.json', 'w') as f:
-        json.dump(convert_numpy_to_list(shield), f)
+    magnets_2 = []
+    for mag in shield['magnets']:
+        mag['dz'] = mag['dz'] / 100.
+        mag['z_center'] = mag['z_center'] / 100. + z_bias
+        components_2 = mag['components']
+        # print(components_2)
+
+        if force_remove_magnetic_field:
+            multiplier = 0
+        else:
+            multiplier = 1/mag_unit
+
+        components_2 = [{'corners': (np.array(x['corners']) / 100.).tolist(),
+                         'field': (x['field'][0] * multiplier, x['field'][1] *multiplier, x['field'][2] *multiplier)} for x
+                        in components_2]
+        mag['components'] = components_2
+        mag['material'] = 'G4_Fe'
+        mag['fieldX'] = 0.
+        mag['fieldY'] = 0.
+        mag['fieldZ'] = 0.
+        magnets_2.append(mag)
+    shield['magnets'] = magnets_2
+
+    # print(shield)
+    shield.update({
+        "worldPositionX": 0, "worldPositionY": 0, "worldPositionZ": 0, "worldSizeX": 11, "worldSizeY": 11,
+        "worldSizeZ": 100,
+        "type" : 1,
+        "limits" : {
+            "max_step_length": -1,
+            "minimum_kinetic_energy": -1
+        }
+    })
+
+
+    return shield

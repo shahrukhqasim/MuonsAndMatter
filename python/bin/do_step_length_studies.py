@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from muon_slabs import simulate_muon, initialize, collect, kill_secondary_tracks
-from lib.magnet_params.params_design_9 import *
+from lib.reference_designs.params_design_9 import *
 # from magnet_paramsX import *
 import time
 from tqdm import tqdm

@@ -5,7 +5,7 @@ import time
 
 import numpy as np
 from muon_slabs import simulate_muon, initialize, collect, kill_secondary_tracks
-from lib.magnet_params.params_design_9 import *
+from lib.reference_designs.params_design_9 import *
 import multiprocessing as mp
 import argh
 
