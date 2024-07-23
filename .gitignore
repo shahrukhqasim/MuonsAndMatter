@@ -12,6 +12,7 @@ build/
 
 # Ignore cpp/cmake-build-debug directory
 cpp/cmake-build-debug/
+cpp/build3
 
 # Ignore plots directory
 plots/
