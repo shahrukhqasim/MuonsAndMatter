@@ -13,11 +13,11 @@ For non-GUI access (such as on servers), download simcontainer2.sif from the fol
 If you are using physik cluster, run the singularity container via the following commands:
 
 ```
-cd /disk/lhcb_data/`whoami`/images
+cd /disk/lhcb_data/sqasim/images
 . /disk/lhcb/scripts/lhcb_setup.sh
 export SINGULARITY_TMPDIR=/disk/users/`whoami`/temp
 export TMPDIR=/disk/users/`whoami`/tmp
-singularity shell --nv -B /cvmfs -B /disk/users/`whoami` -B /run/user/21528 -B /home/hep/`whoami` simcontainer.sif
+singularity shell --nv -B /cvmfs -B /disk/users/`whoami` -B /run/user/21528 -B /home/hep/`whoami` simcontainer2.sif
 ```
 
 For other clusters, modify the commands accordingly. You should include every directory
@@ -63,6 +63,7 @@ Take node of the cmake command and run the following commands as per your userna
 ```
 cd cpp/
 mkdir build
+cd build
 cmake -Dpybind11_DIR=/home/hep/sqasim/.local/lib/python3.10/site-packages/pybind11/share/cmake/pybind11 -DPython_EXECUTABLE=/usr/bin/python3 ..
 make -j
 cd ../..
