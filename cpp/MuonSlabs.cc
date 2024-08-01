@@ -122,7 +122,7 @@ void set_kill_momenta(double kill_momenta) {
     steppingAction->setKillMomenta(kill_momenta);
 }
 
-void initialize( int rseed_0,
+std::string initialize( int rseed_0,
                  int rseed_1, int rseed_2, int rseed_3, std::string detector_specs) {
     randomEngine = new CLHEP::MTwistEngine(rseed_0);
 
@@ -209,6 +209,17 @@ void initialize( int rseed_0,
     ui_manager->ApplyCommand(std::string("/run/printProgress 100"));
 
     std::cout<<"Initialized"<<std::endl;
+
+    Json::Value returnData;
+    returnData["weight_total"] = detector->getDetectorWeight();
+
+    Json::StreamWriterBuilder writer;
+    writer["indentation"] = ""; // No indentation (compact representation)
+
+    // Convert JSON value to string
+    std::string output = Json::writeString(writer, returnData);
+
+    return output;
 }
 
 void kill_secondary_tracks(bool do_kill) {

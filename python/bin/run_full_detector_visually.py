@@ -61,7 +61,9 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
     detector["max_step_length"] = 0.05 # meter
     detector["minimum_kinetic_energy"] = 0.1 # GeV
     # detector["store_all"] = True
-    initialize(np.random.randint(256), np.random.randint(256), np.random.randint(256), np.random.randint(256), json.dumps(detector))
+    output_data = initialize(np.random.randint(256), np.random.randint(256), np.random.randint(256), np.random.randint(256), json.dumps(detector))
+    output_data = json.loads(output_data)
+    print("Detector weight: %f grams or %f tonnes "%(output_data['weight_total'], output_data['weight_total'] / 1E6))
 
 
     # set_field_value(1,0,0)
