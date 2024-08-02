@@ -87,6 +87,7 @@ G4VPhysicalVolume *GDetectorConstruction::Construct() {
 
     // Process the magnets from the JSON variable
     const Json::Value magnets = detectorData["magnets"];
+    double totalWeight = 0;
     for (const auto& magnet : magnets) {
 
         std::cout<<"Adding box"<<std::endl;
@@ -144,6 +145,9 @@ G4VPhysicalVolume *GDetectorConstruction::Construct() {
             // Continue with your existing code
             auto genericV = new G4GenericTrap(G4String("sdf"), dz, corners_two);
             auto logicG = new G4LogicalVolume(genericV, boxMaterial, "gggvl");
+            double volArb = boxMaterial->GetDensity() /(g/m3)  * genericV->GetCubicVolume()/(m3);
+//            std::cout<<"Density "<< boxMaterial->GetDensity()/(g/m3) << " | cubic vol "<<genericV->GetCubicVolume()/(m3)<<std::endl;
+            totalWeight += volArb;
             logicG->SetFieldManager(thingFieldManager, true);
             new G4PVPlacement(0, G4ThreeVector(0, 0, z_center), logicG, "BoxZ", logicWorld, false, 0, true);
             logicG->SetUserLimits(userLimits2);
@@ -175,6 +179,8 @@ G4VPhysicalVolume *GDetectorConstruction::Construct() {
 //        logicBox->SetFieldManager(boxFieldManager, true);
     }
 
+    detectorWeightTotal = totalWeight;
+
     // Return the physical world
     return physWorld;
 }
@@ -183,9 +189,14 @@ G4VPhysicalVolume *GDetectorConstruction::Construct() {
 
 GDetectorConstruction::GDetectorConstruction(Json::Value detector_data) {
     detectorData = detector_data;
+    detectorWeightTotal = 0;
 }
 
 void GDetectorConstruction::setMagneticFieldValue(double strength, double theta, double phi) {
 //    DetectorConstruction::setMagneticFieldValue(strength, theta, phi);
 std::cout<<"cannot set magnetic field value for boxy detector.\n"<<std::endl;
+}
+
+double GDetectorConstruction::getDetectorWeight() {
+    return detectorWeightTotal;
 }

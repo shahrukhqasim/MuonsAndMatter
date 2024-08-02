@@ -146,3 +146,7 @@ void DetectorConstruction::setMagneticFieldValue(double strength, double theta, 
 
     magField->SetFieldValue(fieldValue);
 }
+
+double DetectorConstruction::getDetectorWeight() {
+    return -1;
+}

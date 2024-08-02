@@ -15,7 +15,10 @@ public:
     GDetectorConstruction(Json::Value detector_data);
 protected:
     Json::Value detectorData;
+    double detectorWeightTotal;
 public:
+    double getDetectorWeight() override;
+
     void setMagneticFieldValue(double strength, double theta, double phi) override;
 
 };
