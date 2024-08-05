@@ -17,7 +17,7 @@ def run(muons, phi, z_bias=50, return_weight = False):
 
     output_data = initialize(np.random.randint(256), np.random.randint(256), np.random.randint(256), np.random.randint(256), detector)
     output_data = json.loads(output_data)
-    print("Detector weight: %f grams or %f tonnes "%(output_data['weight_total'], output_data['weight_total'] / 1E6))
+    print("Detector weight: %f kilograms or %f tonnes "%(output_data['weight_total'], output_data['weight_total'] / 1E3))
 
     # set_field_value(1,0,0)
     # set_kill_momenta(65)
