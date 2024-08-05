@@ -4,19 +4,16 @@ import json
 import time
 from lib.reference_designs.params_design_8_ref import get_design as get_design_8_ref
 
-DEF_PARAMS = np.array([70.0, 170.0, 208.0, 207.0, 281.0, 248.0, 305.0,
+
+# Design 8
+def get_design(z_bias=50.,force_remove_magnetic_field=False):
+    mag_unit =  10.000000
+    # nMagnets 9
+    params = np.array([70.0, 170.0, 208.0, 207.0, 281.0, 248.0, 305.0,
 242.0, 40.0, 40.0, 150.0, 150.0, 2.0, 2.0, 80.0, 80.0, 150.0, 150.0, 2.0, 2.0,
 72.0, 51.0, 29.0, 46.0, 10.0, 7.0, 54.0, 38.0, 46.0, 192.0, 14.0, 9.0, 10.0,
 31.0, 35.0, 31.0, 51.0, 11.0, 3.0, 32.0, 54.0, 24.0, 8.0, 8.0, 22.0, 32.0,
 209.0, 35.0, 8.0, 13.0, 33.0, 77.0, 85.0, 241.0, 9.0, 26.0])
-# Design 8
-def get_design(params=DEF_PARAMS,z_bias=50.,force_remove_magnetic_field=False):
-    mag_unit =  10.000000
-    # nMagnets 9
-    if len(params)==42:
-        params = np.insert(params,0,[70.0, 170.0])
-        params = np.insert(params,8,[40.0, 40.0, 150.0, 150.0, 2.0, 2.0, 80.0, 80.0, 150.0, 150.0, 2.0, 2.0])
-        
     shield = design_muon_shield(params)
     # print(shield)
 

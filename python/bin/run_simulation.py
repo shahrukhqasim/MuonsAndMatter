@@ -2,13 +2,13 @@
 import json
 import numpy as np
 from muon_slabs import simulate_muon, initialize, collect, kill_secondary_tracks
-from lib.reference_designs.params_design_8 import get_design
+from lib.ship_muon_shield import get_design_from_params
 
 def run(muons, phi, z_bias=50, return_weight = False):
     if type(muons) is tuple:
         muons = muons[0]
 
-    detector = get_design(params = phi,z_bias=z_bias)
+    detector = get_design_from_params(params = phi,z_bias=z_bias,force_remove_magnetic_field=False)
     
     detector['limits']['minimum_kinetic_energy'] =  0.1 # GeV
     detector['limits']['max_step_length'] = 0.05 # 5 cm

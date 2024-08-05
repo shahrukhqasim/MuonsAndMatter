@@ -382,6 +382,10 @@ def get_design_from_params(params, z_bias=50., force_remove_magnetic_field=False
     mag_unit =  10.000000
     # nMagnets 9
 
+    if len(params)==42: #shield might have 14 fixed parameters
+        params = np.insert(params,0,[70.0, 170.0])
+        params = np.insert(params,8,[40.0, 40.0, 150.0, 150.0, 2.0, 2.0, 80.0, 80.0, 150.0, 150.0, 2.0, 2.0])
+
     shield = design_muon_shield(params)
     # print(shield)
 
