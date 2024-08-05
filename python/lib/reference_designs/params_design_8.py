@@ -61,8 +61,8 @@ def get_design(params=DEF_PARAMS,z_bias=50.,force_remove_magnetic_field=False):
         "sensitive_film": {
             "z_center": new_mz,
             "dz": 0.01,
-            "dx": 3,
-            "dy": 3,
+            "dx": 3,#m
+            "dy": 3,#m
         }
     })
 
