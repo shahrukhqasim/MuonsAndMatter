@@ -13,7 +13,10 @@ DEF_PARAMS = np.array([70.0, 170.0, 208.0, 207.0, 281.0, 248.0, 305.0,
 def get_design(params=DEF_PARAMS,z_bias=50.,force_remove_magnetic_field=False):
     mag_unit =  10.000000
     # nMagnets 9
-
+    if len(params)==42:
+        params = np.insert(params,0,[70.0, 170.0])
+        params = np.insert(params,8,[40.0, 40.0, 150.0, 150.0, 2.0, 2.0, 80.0, 80.0, 150.0, 150.0, 2.0, 2.0])
+        
     shield = design_muon_shield(params)
     # print(shield)
 
