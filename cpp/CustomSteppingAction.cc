@@ -26,6 +26,7 @@ CustomSteppingAction::CustomSteppingAction()
     max_momenta_diff = -1;
     killSecondary = false;
     store_all = false;
+    store_primary = false;
 }
 
 CustomSteppingAction::~CustomSteppingAction()
@@ -70,7 +71,7 @@ void CustomSteppingAction::UserSteppingAction(const G4Step* step)
 
 
 
-    if (track->GetTrackID() == primaryTrackId or store_all) {
+    if ((store_primary and track->GetTrackID() == primaryTrackId) or store_all) {
         G4ThreeVector position2 = track->GetPosition();
 
         // Fill the vectors with current step data
@@ -86,7 +87,7 @@ void CustomSteppingAction::UserSteppingAction(const G4Step* step)
         stepLength.push_back(step->GetStepLength() / m);
         chargeDeposit.push_back(step->GetTotalEnergyDeposit());
     }
-    else if (killSecondary) {
+    if (killSecondary && track->GetTrackID() != primaryTrackId) {
         track->SetTrackStatus(fStopAndKill);
     }
     else {
@@ -139,4 +140,8 @@ void CustomSteppingAction::setKillSecondary(bool killSecondary) {
 
 void CustomSteppingAction::setStoreAll(bool storeAll) {
     store_all = storeAll;
+}
+
+void CustomSteppingAction::setStorePrimary(bool storePrimary) {
+    store_primary = storePrimary;
 }

@@ -36,6 +36,7 @@
 #include "G4ClassicalRK4.hh"
 #include "G4Para.hh"
 #include "G4GenericTrap.hh"
+#include "SlimFilmSensitiveDetector.hh"
 
 
 #include <iostream>
@@ -179,6 +180,22 @@ G4VPhysicalVolume *GDetectorConstruction::Construct() {
 //        logicBox->SetFieldManager(boxFieldManager, true);
     }
 
+    if (detectorData.isMember("sensitive_film")) {
+        G4Material* air = nist->FindOrBuildMaterial("G4_AIR");
+
+        const Json::Value sensitiveFilm = detectorData["sensitive_film"];
+        double dz = sensitiveFilm["dz"].asDouble() * m;
+        double dx = sensitiveFilm["dx"].asDouble() * m;
+        double dy = sensitiveFilm["dy"].asDouble() * m;
+        double z_center = sensitiveFilm["z_center"].asDouble() * m;
+
+        auto sensitiveBox = new G4Box("sensitive_film", dx/2, dy/2, dz/2);
+        sensitiveLogical = new G4LogicalVolume(sensitiveBox, air, "sensitive_film_logic");
+        new G4PVPlacement(0, G4ThreeVector(0, 0, z_center), sensitiveLogical, "sensitive_plc", logicWorld, false, 0, true);
+    }
+
+
+
     detectorWeightTotal = totalWeight;
 
     // Return the physical world
@@ -200,3 +217,20 @@ std::cout<<"cannot set magnetic field value for boxy detector.\n"<<std::endl;
 double GDetectorConstruction::getDetectorWeight() {
     return detectorWeightTotal;
 }
+
+void GDetectorConstruction::ConstructSDandField() {
+    G4VUserDetectorConstruction::ConstructSDandField();
+
+    // Attach the sensitive detector to the logical volume
+    if (sensitiveLogical) {
+        auto* sdManager = G4SDManager::GetSDMpointer();
+
+        G4String sdName = "MySensitiveDetector";
+        slimFilmSensitiveDetector = new SlimFilmSensitiveDetector(sdName);
+        sdManager->AddNewDetector(slimFilmSensitiveDetector);
+        sensitiveLogical->SetSensitiveDetector(slimFilmSensitiveDetector);
+        std::cout<<"Sensitive set...\n";
+    }
+
+}
+

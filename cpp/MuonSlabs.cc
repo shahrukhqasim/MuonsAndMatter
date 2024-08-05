@@ -23,6 +23,7 @@
 #include "json/json.h"
 #include <iostream>
 #include <sstream>
+#include <stdexcept> // For standard exceptions like std::runtime_error
 
 
 namespace py = pybind11;
@@ -58,6 +59,63 @@ void simulate_muon(double px, double py, double pz, int charge,
     ui_manager->ApplyCommand(std::string("/run/beamOn ") + std::to_string(1));
 
 
+}
+
+py::dict collect_from_sensitive() {
+    auto detector2 = dynamic_cast<GDetectorConstruction*>(detector);
+    if (detector2 == nullptr) {
+        throw std::runtime_error("Sensitive film only possible for GDetectorConstruction.");
+    }
+
+    if (detector2->slimFilmSensitiveDetector == nullptr) {
+        throw std::runtime_error("Slim film not installed in the detector.");
+    }
+
+    std::vector<double>& px = detector2->slimFilmSensitiveDetector->px;
+    std::vector<double>& py = detector2->slimFilmSensitiveDetector->py;
+    std::vector<double>& pz = detector2->slimFilmSensitiveDetector->pz;
+
+    std::vector<double>& x = detector2->slimFilmSensitiveDetector->x;
+    std::vector<double>& y = detector2->slimFilmSensitiveDetector->y;
+    std::vector<double>& z = detector2->slimFilmSensitiveDetector->z;
+    std::vector<int>& trackId = detector2->slimFilmSensitiveDetector->trackId;
+    std::vector<int>& pdgid = detector2->slimFilmSensitiveDetector->pid;
+
+
+    std::vector<double> px_copy(px.begin(), px.end());
+    std::vector<double> py_copy(py.begin(), py.end());
+    std::vector<double> pz_copy(pz.begin(), pz.end());
+
+    std::vector<double> x_copy(x.begin(), x.end());
+    std::vector<double> y_copy(y.begin(), y.end());
+    std::vector<double> z_copy(z.begin(), z.end());
+
+    std::vector<int> trackId_copy(trackId.begin(), trackId.end());
+    std::vector<int> pdgid_copy(pdgid.begin(), pdgid.end());
+
+    py::array np_px = py::cast(px_copy);
+    py::array np_py = py::cast(py_copy);
+    py::array np_pz = py::cast(pz_copy);
+
+    py::array np_x = py::cast(x_copy);
+    py::array np_y = py::cast(y_copy);
+    py::array np_z = py::cast(z_copy);
+
+    py::array np_trackId = py::cast(trackId_copy);
+    py::array np_pdgId = py::cast(pdgid_copy);
+
+    py::dict d = py::dict(
+            "px"_a = np_px,
+            "py"_a = np_py,
+            "pz"_a = np_pz,
+            "x"_a = np_x,
+            "y"_a = np_y,
+            "z"_a = np_z,
+            "track_id"_a = np_trackId,
+            "pdg_id"_a = np_pdgId
+    );
+
+    return d;
 }
 
 py::dict collect() {
@@ -137,6 +195,7 @@ std::string initialize( int rseed_0,
 
     bool applyStepLimiter = false;
     bool storeAll = false;
+    bool storePrimary = true;
     if (detector_specs.empty())
         detector = new DetectorConstruction();
     else {
@@ -171,6 +230,9 @@ std::string initialize( int rseed_0,
         if (detectorData.isMember("store_all")) {
             storeAll = detectorData["store_all"].asBool();
         }
+        if (detectorData.isMember("store_primary")) {
+            storePrimary = detectorData["store_primary"].asBool();
+        }
     }
 
     std::cout<<"Detector initializing..."<<std::endl;
@@ -191,6 +253,7 @@ std::string initialize( int rseed_0,
     primariesGenerator->setSteppingAction(steppingAction);
     customEventAction->setSteppingAction(steppingAction);
     steppingAction->setStoreAll(storeAll);
+    steppingAction->setStorePrimary(storePrimary);
 
 //    auto actionInitialization = new B4aActionInitialization(detector, eventAction, primariesGenerator);
 //    runManager->SetUserInitialization(actionInitialization);
@@ -253,6 +316,7 @@ PYBIND11_MODULE(muon_slabs, m) {
     m.def("simulate_muon", &simulate_muon, "A function which simulates a muon through geant4 and returns the steps");
     m.def("initialize", &initialize, "Initialize geant4 stuff");
     m.def("collect", &collect, "Collect back the data");
+    m.def("collect_from_sensitive", &collect_from_sensitive, "Collect back the data from the sensitive film placed");
     m.def("set_field_value", &set_field_value, "Set the magnetic field value");
     m.def("set_kill_momenta", &set_kill_momenta, "Set the kill momenta");
     m.def("kill_secondary_tracks", &kill_secondary_tracks, "Kill all tracks from resulting cascade");
