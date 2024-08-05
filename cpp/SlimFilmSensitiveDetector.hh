@@ -26,6 +26,19 @@ public:
     virtual void Initialize(G4HCofThisEvent* hce) override;
     virtual G4bool ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist) override;
     virtual void EndOfEvent(G4HCofThisEvent* hce) override;
+
+
+public:
+    std::vector<double> px;
+    std::vector<double> py;
+    std::vector<double> pz;
+
+    std::vector<double> x;
+    std::vector<double> y;
+    std::vector<double> z;
+
+    std::vector<int> trackId;
+    std::vector<int> pid;
 };
 
 

@@ -7,18 +7,24 @@
 
 #include "DetectorConstruction.hh"
 #include "json/json.h"
+#include "SlimFilmSensitiveDetector.hh"
 
 class GDetectorConstruction : public DetectorConstruction {
 public:
     virtual G4VPhysicalVolume *Construct();
+    SlimFilmSensitiveDetector* slimFilmSensitiveDetector;
 public:
     GDetectorConstruction(Json::Value detector_data);
 protected:
     Json::Value detectorData;
+public:
+    void ConstructSDandField() override;
+
+protected:
     double detectorWeightTotal;
+    G4LogicalVolume* sensitiveLogical;
 public:
     double getDetectorWeight() override;
-
     void setMagneticFieldValue(double strength, double theta, double phi) override;
 
 };

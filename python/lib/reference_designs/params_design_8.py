@@ -19,6 +19,8 @@ def get_design(z_bias=50., force_remove_magnetic_field=False):
     # print(shield)
 
     magnets_2 = []
+    max_z = None
+
     for mag in shield['magnets']:
         mag['dz'] = mag['dz'] / 100.
         mag['z_center'] = mag['z_center'] / 100. + z_bias
@@ -39,6 +41,10 @@ def get_design(z_bias=50., force_remove_magnetic_field=False):
         mag['fieldY'] = 0.
         mag['fieldZ'] = 0.
         magnets_2.append(mag)
+        new_mz = mag['dz'] / 2 + mag['z_center'] + 0.05
+        if max_z is None or new_mz > max_z:
+            max_z = new_mz
+
     shield['magnets'] = magnets_2
 
     # print(shield)
@@ -49,6 +55,12 @@ def get_design(z_bias=50., force_remove_magnetic_field=False):
         "limits" : {
             "max_step_length": -1,
             "minimum_kinetic_energy": -1
+        },
+        "sensitive_film": {
+            "z_center": new_mz,
+            "dz": 0.01,
+            "dx": 3,
+            "dy": 3,
         }
     })
 

@@ -26,10 +26,14 @@ private:
     bool killSecondary;
 
     bool store_all;
+    bool store_primary;
 
 public:
     // Add any necessary members here
     std::vector<double> px;
+
+    void setStorePrimary(bool storePrimary);
+
     std::vector<double> py;
     std::vector<double> pz;
 
