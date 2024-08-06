@@ -3,7 +3,7 @@ import numpy as np
 
 
 
-def get_design(z_bias=50., force_remove_magnetic_field=False):
+def get_design(z_bias=50., force_remove_magnetic_field=False) -> dict:
     mag_unit =  10.000000
     # nMagnets 9
     magnets = []
