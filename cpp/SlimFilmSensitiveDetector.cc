@@ -44,6 +44,10 @@ G4bool SlimFilmSensitiveDetector::ProcessHits(G4Step *aStep, G4TouchableHistory 
     z.push_back(position2.z() / m);
 
     pid.push_back(theTrack->GetDefinition()->GetPDGEncoding());
+
+    theTrack->SetTrackStatus(fStopAndKill);
+
+    return true;
 }
 
 void SlimFilmSensitiveDetector::EndOfEvent(G4HCofThisEvent *hce) {
