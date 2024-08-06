@@ -92,12 +92,12 @@ if __name__ == '__main__':
     if 0<n_muons<=data.shape[0]:
         data = data[:n_muons]
         cores = min(cores,n_muons)
-    data = data[0:cores*int(len(data) / cores)]
-    division = int(len(data) / cores)
 
+    division = int(len(data) / (cores-1))
     workloads = []
-    for i in range(cores):
+    for i in range(cores-1):
         workloads.append(data[i * division:(i + 1) * division, :])
+    workloads.append(data[(i + 1) * division:, :])
 
     t1 = time.time()
     with mp.Pool(cores) as pool:
