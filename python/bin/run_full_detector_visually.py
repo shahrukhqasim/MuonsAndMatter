@@ -66,8 +66,8 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
     with open('data/gdetector.json', 'w') as f:
         json.dump(detector, f)
 
-    detector["max_step_length"] = 0.05 # meter
-    detector["minimum_kinetic_energy"] = 0.1 # GeV
+    detector['limits']["max_step_length"] = 0.05 # meter
+    detector['limits']["minimum_kinetic_energy"] = 0.1 # GeV
     detector["store_primary"] = True # If you place a sensitive film, you can also set this to False because you can
                                      # get all the hits at the sensitive film.
     detector["store_all"] = False

@@ -9,7 +9,7 @@ def run(muons,
         z_bias=50, 
         z_dist:float = 0.1,
         return_weight = False,
-        sensitive_film_params:dict = {'dz': 0.01, 'dx': 3, 'dy': 5}):
+        sensitive_film_params:dict = {'dz': 0.01, 'dx': 6, 'dy': 10}):
     
     if type(muons) is tuple:
         muons = muons[0]
@@ -23,12 +23,11 @@ def run(muons,
     for k,v in sensitive_film_params.items():
         detector['sensitive_film'][k] = v
 
-    detector["max_step_length"] = 0.05 # meter
-    detector["minimum_kinetic_energy"] = 0.1 # GeV
+    detector['limits']["max_step_length"] = 0.05 # meter
+    detector['limits']["minimum_kinetic_energy"] = 0.1 # GeV
     detector["store_primary"] = False # If you place a sensitive film, you can also set this to False because you can
                                      # get all the hits at the sensitive film.
     detector["store_all"] = False
-
     output_data = initialize(np.random.randint(256), np.random.randint(256), np.random.randint(256), np.random.randint(256), json.dumps(detector))
     output_data = json.loads(output_data)
 
@@ -48,9 +47,9 @@ def run(muons,
         data_s = collect_from_sensitive()
         #muon_data += [[data['px'][-1], data['py'][-1], data['pz'][-1],data['x'][-1], data['y'][-1], data['z'][-1]]]
         if len(data_s['px'])>0 and 13 in np.abs(data_s['pdg_id']): 
-               i = -1
+               i = 0
                while int(abs(data_s['pdg_id'][i])) != 13:
-                   i -= 1
+                   i += 1
                muon_data_s += [[data_s['px'][i], data_s['py'][i], data_s['pz'][i],data_s['x'][i], data_s['y'][i], data_s['z'][i],data_s['pdg_id'][i]]]
     #muon_data = np.asarray(muon_data)
     muon_data_s = np.asarray(muon_data_s)
@@ -112,7 +111,7 @@ if __name__ == '__main__':
 
     print(f"Workload of {division} samples spread over {cores} cores took {t2 - t1:.2f} seconds.")
     all_results = np.concatenate(all_results, axis=0)
-    print('DATA S', all_results.shape)
+    print('Data Shape', all_results.shape)
     print(np.unique(all_results[:,-1],return_counts = True))
     #with gzip.open(f'data/results_{tag}.pkl', 'wb') as f:
     #    pickle.dump(all_results, f)
