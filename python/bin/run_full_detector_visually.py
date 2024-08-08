@@ -55,11 +55,10 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
     pz = data[:, 2]
     pt = np.sqrt(px ** 2 + py ** 2)
     p_mag = np.sqrt(px ** 2 + py ** 2 + pz ** 2)
-    idx = np.argmax(pt)
-    #filt = np.logical_and(pt < 1, p_mag > 15)
-    #px = px[filt]*0
-    #py = py[filt]*0
-    #pz = pz[filt]*0+100
+    filt = np.logical_and(pt < 1, p_mag > 15)
+    px = px[filt]*0
+    py = py[filt]*0
+    pz = pz[filt]*0+100
 
 
 
@@ -103,8 +102,8 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
     # px = np.random.normal(mu_x, std_x, N_samples)
     # py = np.random.normal(mu_y, std_y, N_samples)
     # pz = np.random.exponential(lambda_z, N_samples)
-
-    zpos = detector['magnets'][0]['z_center'] - detector['magnets'][0]['dz']/2-1
+    zpos = 0.1
+    zpos = detector['magnets'][0]['z_center'] - detector['magnets'][0]['dz']/2 - zpos
 
     charge = np.random.randint(2, size=N_samples)
     charge[charge == 0] = -1
@@ -117,28 +116,9 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
             muon_data_sensitive += [data_sensitive]
         muon_data += [data]
 
-    simulate_muon_(muon_data, muon_data_sensitive, px[-1], py[-1], pz[-1], -1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
-    simulate_muon_(muon_data, muon_data_sensitive,  px[0], py[0], pz[0], 1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
-    simulate_muon_(muon_data, muon_data_sensitive, px[idx], py[idx], pz[idx], 1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
-    for mag in detector['magnets']:
-        print(mag['dz'])
-        print(mag['z_center'])
-
-    #
-    # for i in range(N_samples):
-    #     if const:
-    #         charge = np.random.randint(2)
-    #         if charge == 0:
-    #             charge = -1
-    #         print(charge)
-    #         simulate_muon(0, 0, 20, charge, np.random.normal(0, 0.05), np.random.normal(0, 0.05), zpos)
-    #     else:
-    #         simulate_muon(px[i], py[i], pz[i], charge[i], np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
-    #     data = collect()
-    #     print("X", data['step_length'])
-    #     muon_data += [data]
-    #
-    # 0/0
+    simulate_muon_(muon_data, muon_data_sensitive, 0, 0, 100, -1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
+    simulate_muon_(muon_data, muon_data_sensitive,  0, 0, 50, -1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
+    simulate_muon_(muon_data, muon_data_sensitive, px[np.argmax(pt)], py[np.argmax(pt)], pz[np.argmax(pt)], 1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
 
 
     fig = plt.figure()
