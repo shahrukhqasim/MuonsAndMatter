@@ -146,7 +146,7 @@ G4VPhysicalVolume *GDetectorConstruction::Construct() {
             // Continue with your existing code
             auto genericV = new G4GenericTrap(G4String("sdf"), dz, corners_two);
             auto logicG = new G4LogicalVolume(genericV, boxMaterial, "gggvl");
-            double volArb = boxMaterial->GetDensity() /(g/m3)  * genericV->GetCubicVolume()/(m3);
+            double volArb = boxMaterial->GetDensity() /(kg/m3)  * genericV->GetCubicVolume()/(m3);
 //            std::cout<<"Density "<< boxMaterial->GetDensity()/(g/m3) << " | cubic vol "<<genericV->GetCubicVolume()/(m3)<<std::endl;
             totalWeight += volArb;
             logicG->SetFieldManager(thingFieldManager, true);

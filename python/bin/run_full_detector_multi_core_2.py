@@ -62,15 +62,14 @@ def main(cores: int = 4):
     with gzip.open('data/oliver_data_enriched.pkl', 'rb') as f:
         data = pickle.load(f)
 
-    data = data[0:cores*int(len(data) / cores)]
     np.random.shuffle(data)
-    division = int(len(data) / cores)
 
-    # print(f"Workloads for each core: {workloads}")
-
+    division = int(len(data) / (cores-1)) #cores-1 so it does not throw away some samples
     workloads = []
     for i in range(cores):
         workloads.append(data[i * division:(i + 1) * division, :])
+    for j,w in enumerate(data[(i + 1) * division:, :]):    
+        workloads[j] = np.append(workloads[j],w.reshape(1,-1),axis=0)
 
     t1 = time.time()
     with mp.Pool(cores) as pool:
