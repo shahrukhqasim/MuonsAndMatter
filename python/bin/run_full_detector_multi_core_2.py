@@ -19,7 +19,10 @@ def run_test(workload):
     detector['limits']['minimum_kinetic_energy'] =  0.1 # GeV
     detector['limits']['max_step_length'] = 0.05 # 5 cm
     # detector['store_all'] = True
+    # detector.pop('sensitive_film')
     detector = json.dumps(detector)
+
+
 
 
     initialize(np.random.randint(256), np.random.randint(256), np.random.randint(256), np.random.randint(256),
@@ -58,9 +61,11 @@ def worker(N_samples):
     return elapsed_time, resulting_data
 
 
-def main(cores: int = 4):
+def main(cores: int = 4, num_samples: int = -1):
     with gzip.open('data/oliver_data_enriched.pkl', 'rb') as f:
         data = pickle.load(f)
+
+    data = data[:num_samples]
 
     data = data[0:cores*int(len(data) / cores)]
     np.random.shuffle(data)
