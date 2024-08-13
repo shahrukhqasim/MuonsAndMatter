@@ -235,7 +235,7 @@ def create_magnet(magnetName, medium, tShield,
 
 
 def design_muon_shield(params):
-    fSC_mag = True
+    fSC_mag = False #default was true
     n_magnets = 9
     cm = 1
     mm = 0.1 * cm
