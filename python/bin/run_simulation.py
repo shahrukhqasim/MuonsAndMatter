@@ -7,9 +7,9 @@ from lib.ship_muon_shield import get_design_from_params
 def run(muons, 
         phi, 
         z_bias=50, 
-        z_dist:float = 0.1,
+        input_dist:float = 0.1,
         return_weight = False,
-        sensitive_film_params:dict = {'dz': 0.01, 'dx': 6, 'dy': 10}):
+        sensitive_film_params:dict = {'dz': 0.01, 'dx': 6, 'dy': 10,'position':0}):
     
     if type(muons) is tuple:
         muons = muons[0]
@@ -21,7 +21,8 @@ def run(muons,
     detector = get_design_from_params(params = phi,z_bias=z_bias,force_remove_magnetic_field=False)
 
     for k,v in sensitive_film_params.items():
-        detector['sensitive_film'][k] = v
+        if k=='position': detector['sensitive_film']['z_center'] += v
+        else: detector['sensitive_film'][k] = v
 
     detector['limits']["max_step_length"] = 0.05 # meter
     detector['limits']["minimum_kinetic_energy"] = 0.1 # GeV
@@ -35,8 +36,8 @@ def run(muons,
     # set_kill_momenta(65)
     kill_secondary_tracks(True)
     px,py,pz,x,y,z,charge = muons.T
-    if z_dist is not None:
-        z_pos = detector['magnets'][0]['z_center'] - detector['magnets'][0]['dz']/2-z_dist
+    if input_dist is not None:
+        z_pos = detector['magnets'][0]['z_center'] - detector['magnets'][0]['dz']/2-input_dist
         z = z_pos*np.ones_like(z)
 
     #muon_data = []
@@ -83,7 +84,7 @@ if __name__ == '__main__':
     n_muons = args.n
     input_file = args.f
     z_bias = 50
-    z_dist = args.z
+    input_dist = args.z
     sensitive_film_params = {'dz': 0.01, 'dx': 3, 'dy': 5}
 
     with gzip.open(input_file, 'rb') as f:
@@ -101,7 +102,7 @@ if __name__ == '__main__':
 
     t1 = time.time()
     with mp.Pool(cores) as pool:
-        result = pool.starmap(run, [(workload,params,z_bias,z_dist,True,sensitive_film_params) for workload in workloads])
+        result = pool.starmap(run, [(workload,params,z_bias,input_dist,True,sensitive_film_params) for workload in workloads])
     t2 = time.time()
 
     all_results = []
