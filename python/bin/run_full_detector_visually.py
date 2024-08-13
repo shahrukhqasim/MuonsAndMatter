@@ -243,10 +243,8 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
         #     z = z[::step][:20]
 
         # print(data)
-        if particle>0:
-            ax.scatter(z, x, y, color='red', label=f'Muon {i + 1}', s=3)
-        else:
-            ax.scatter(z, x, y, color='green', label=f'AntiMuon {i + 1}', s=3)
+        ax.scatter(z[particle>0], x[particle>0], y[particle>0], color='red', label=f'Muon {i + 1}', s=3)
+        ax.scatter(z[particle<0], x[particle<0], y[particle<0], color='green', label=f'AntiMuon {i + 1}', s=3)
 
     ax.set_xlim(-30+z_bias, -70+z_bias)
     ax.set_ylim(-20, 20)
