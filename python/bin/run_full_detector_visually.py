@@ -3,6 +3,7 @@ import json
 
 import numpy as np
 import matplotlib.pyplot as plt
+ 
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from muon_slabs import simulate_muon, initialize, collect, kill_secondary_tracks, collect_from_sensitive
 from lib.reference_designs.params_design_9 import get_design as get_design_9
@@ -31,12 +32,15 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
                     number = float(line.strip())
                     # Append the number to the list
                     params.append(number)
+
+
         else: 
-            params = [70.0, 170.0, 208.0, 207.0, 281.0, 248.0, 305.0,
-                    242.0, 40.0, 40.0, 150.0, 150.0, 2.0, 2.0, 80.0, 80.0, 150.0, 150.0, 2.0, 2.0,
-                    72.0, 51.0, 29.0, 46.0, 10.0, 7.0, 54.0, 38.0, 46.0, 192.0, 14.0, 9.0, 10.0,
-                    31.0, 35.0, 31.0, 51.0, 11.0, 3.0, 32.0, 54.0, 24.0, 8.0, 8.0, 22.0, 32.0,
-                    209.0, 35.0, 8.0, 13.0, 33.0, 77.0, 85.0, 241.0, 9.0, 26.0]
+            params = [208.0, 207.0, 281.0, 248.0, 305.0, 242.0, 72.0, 51.0, 29.0, 46.0, 10.0, 7.0, 54.0,
+                         38.0, 46.0, 192.0, 14.0, 9.0, 10.0, 31.0, 35.0, 31.0, 51.0, 11.0, 3.0, 32.0, 54.0, 
+                         24.0, 8.0, 8.0, 22.0, 32.0, 209.0, 35.0, 8.0, 13.0, 33.0, 77.0, 85.0, 241.0, 9.0, 26.0]
+        if len(params)==42: #shield might have 14 fixed parameters
+                    params = np.insert(params,0,[70.0, 170.0])
+                    params = np.insert(params,8,[40.0, 40.0, 150.0, 150.0, 2.0, 2.0, 80.0, 80.0, 150.0, 150.0, 2.0, 2.0])
     
 
         detector = get_design_from_params(params, z_bias=z_bias, force_remove_magnetic_field=False)
@@ -71,7 +75,7 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
                                      # get all the hits at the sensitive film.
     detector["store_all"] = False
 
-    sensitive_film_params:dict = {'dz': 0.01, 'dx': 3, 'dy': 5}
+    sensitive_film_params:dict = {'dz': 0.01, 'dx': 6, 'dy': 10}
     for k,v in sensitive_film_params.items():
         detector['sensitive_film'][k] = v
 
@@ -115,11 +119,12 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
             data_sensitive = collect_from_sensitive()
             muon_data_sensitive += [data_sensitive]
         muon_data += [data]
-
-    simulate_muon_(muon_data, muon_data_sensitive, 0, 0, 100, -1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
-    simulate_muon_(muon_data, muon_data_sensitive,  0, 0, 50, -1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
+    simulate_muon_(muon_data, muon_data_sensitive, 0, 0, 50, 1, 0, 0, zpos)
+    simulate_muon_(muon_data, muon_data_sensitive,  0, 0, 100, 1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
     simulate_muon_(muon_data, muon_data_sensitive, px[np.argmax(pt)], py[np.argmax(pt)], pz[np.argmax(pt)], 1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
-
+    simulate_muon_(muon_data, muon_data_sensitive, 0, 0, 50, -1, 0, 0, zpos)
+    simulate_muon_(muon_data, muon_data_sensitive,  0, 0, 100, -1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
+    simulate_muon_(muon_data, muon_data_sensitive, px[np.argmax(pt)], py[np.argmax(pt)], pz[np.argmax(pt)], -1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -225,6 +230,7 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
         x = data['x']
         y = data['y']
         z = data['z']
+        particle = data['pdg_id']
         total_sensitive_hits += len(data['x'])
         # print(len(x))
         # # Check if the number of items is more than 20
@@ -237,8 +243,10 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
         #     z = z[::step][:20]
 
         # print(data)
-
-        ax.scatter(z, x, y, color='red', label=f'Muon {i + 1}', s=3)
+        if particle>0:
+            ax.scatter(z, x, y, color='red', label=f'Muon {i + 1}', s=3)
+        else:
+            ax.scatter(z, x, y, color='green', label=f'AntiMuon {i + 1}', s=3)
 
     ax.set_xlim(-30+z_bias, -70+z_bias)
     ax.set_ylim(-20, 20)
