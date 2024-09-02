@@ -234,8 +234,7 @@ def create_magnet(magnetName, medium, tShield,
     tShield['magnets'].append(theMagnet)
 
 
-def design_muon_shield(params):
-    fSC_mag = False #default was true
+def design_muon_shield(params,fSC_mag = True):
     n_magnets = 9
     cm = 1
     mm = 0.1 * cm
@@ -378,11 +377,11 @@ def design_muon_shield(params):
     return tShield
 
 
-def get_design_from_params(params, z_bias=50., force_remove_magnetic_field=False):
+def get_design_from_params(params, z_bias=50., force_remove_magnetic_field=False, fSC_mag:bool = True):
     mag_unit =  10.000000
     # nMagnets 9
 
-    shield = design_muon_shield(params)
+    shield = design_muon_shield(params, fSC_mag)
     # print(shield)
 
     magnets_2 = []
