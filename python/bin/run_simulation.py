@@ -9,6 +9,7 @@ def run(muons,
         z_bias=50, 
         input_dist:float = 0.1,
         return_weight = False,
+        fSC_mag:bool = True,
         sensitive_film_params:dict = {'dz': 0.01, 'dx': 6, 'dy': 10,'position':0}):
     
     if type(muons) is tuple:
@@ -18,7 +19,7 @@ def run(muons,
         phi = np.insert(phi,0,[70.0, 170.0])
         phi = np.insert(phi,8,[40.0, 40.0, 150.0, 150.0, 2.0, 2.0, 80.0, 80.0, 150.0, 150.0, 2.0, 2.0])
 
-    detector = get_design_from_params(params = phi,z_bias=z_bias,force_remove_magnetic_field=False)
+    detector = get_design_from_params(params = phi,z_bias=z_bias,force_remove_magnetic_field=False,fSC_mag = fSC_mag)
 
     for k,v in sensitive_film_params.items():
         if k=='position': detector['sensitive_film']['z_center'] += v
