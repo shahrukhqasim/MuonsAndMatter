@@ -16,7 +16,7 @@ from tqdm import tqdm
 import pickle
 import argh
 
-def main(design, output_file='plots/detector_visualization.png', params_file=None):
+def main(design, output_file='plots/detector_visualization.png', params_file=None, sensitive_film_position:float = 0):
     design = int(design)
     assert design in {100, 9, 8}
 
@@ -75,9 +75,10 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
                                      # get all the hits at the sensitive film.
     detector["store_all"] = False
 
-    sensitive_film_params:dict = {'dz': 0.01, 'dx': 6, 'dy': 10}
+    sensitive_film_params:dict = {'dz': 0.01, 'dx': 6, 'dy': 10, 'position':sensitive_film_position}
     for k,v in sensitive_film_params.items():
-        detector['sensitive_film'][k] = v
+        if k=='position': detector['sensitive_film']['z_center'] += v
+        else: detector['sensitive_film'][k] = v
 
     # detector["store_all"] = True
     output_data = initialize(np.random.randint(256), np.random.randint(256), np.random.randint(256), np.random.randint(256), json.dumps(detector))
@@ -246,7 +247,8 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
         ax.scatter(z[particle>0], x[particle>0], y[particle>0], color='red', label=f'Muon {i + 1}', s=3)
         ax.scatter(z[particle<0], x[particle<0], y[particle<0], color='green', label=f'AntiMuon {i + 1}', s=3)
 
-    ax.set_xlim(-30+z_bias, -70+z_bias)
+
+    ax.set_xlim(-30+z_bias+sensitive_film_position, -70+z_bias)
     ax.set_ylim(-20, 20)
     ax.set_zlim(-20, 20)
 
