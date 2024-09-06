@@ -10,7 +10,7 @@ def run(muons,
         input_dist:float = 0.1,
         return_weight = False,
         fSC_mag:bool = True,
-        sensitive_film_params:dict = {'dz': 0.01, 'dx': 6, 'dy': 10,'position':0}):
+        sensitive_film_params:dict = {'dz': 0.01, 'dx': 100, 'dy': 100,'position':0}):
     
     if type(muons) is tuple:
         muons = muons[0]
@@ -90,7 +90,7 @@ if __name__ == '__main__':
 
     with gzip.open(input_file, 'rb') as f:
         data = pickle.load(f)
-    np.random.shuffle(data)
+    #np.random.shuffle(data)
     if 0<n_muons<=data.shape[0]:
         data = data[:n_muons]
         cores = min(cores,n_muons)
@@ -113,6 +113,8 @@ if __name__ == '__main__':
 
     print(f"Workload of {division} samples spread over {cores} cores took {t2 - t1:.2f} seconds.")
     all_results = np.concatenate(all_results, axis=0)
+    with gzip.open('data/outputs.pkl', "wb") as f:
+        pickle.dump(all_results, f)
     print('Data Shape', all_results.shape)
     print(np.unique(all_results[:,-1],return_counts = True))
     #with gzip.open(f'data/results_{tag}.pkl', 'wb') as f:
