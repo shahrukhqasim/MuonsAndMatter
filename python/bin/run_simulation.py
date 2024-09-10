@@ -40,6 +40,10 @@ def run(muons,
     if input_dist is not None:
         z_pos = detector['magnets'][0]['z_center'] - detector['magnets'][0]['dz']/2-input_dist
         z = z_pos*np.ones_like(z)
+    else: 
+        z = np.asarray(z) - np.max(z)
+        z += detector['magnets'][0]['z_center'] - detector['magnets'][0]['dz']/2
+
 
     #muon_data = []
     muon_data_s = []
@@ -62,20 +66,20 @@ def run(muons,
 
 
 
-DEF_PARAMS = [208.0, 207.0, 281.0, 248.0, 305.0, 242.0, 72.0, 51.0, 29.0, 46.0, 10.0, 7.0, 54.0, 38.0, 46.0, 192.0, 14.0, 9.0, 10.0, 31.0, 35.0, 31.0, 51.0, 11.0, 3.0, 32.0, 54.0, 24.0, 8.0, 8.0, 22.0, 32.0, 209.0, 35.0, 8.0, 13.0, 33.0, 77.0, 85.0, 241.0, 9.0, 26.0]
-DEF_INPUT_FILE = 'data/inputs.pkl'#'data/oliver_data_enriched.pkl'
+DEF_INPUT_FILE = 'data/subsample.pkl'#'data/oliver_data_enriched.pkl'
 if __name__ == '__main__':
     import argparse
     import gzip
     import pickle
     import time
     import multiprocessing as mp
+    from lib.reference_designs.params import *
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", type=int, default=0)
     parser.add_argument("-c", type=int, default=45)
     parser.add_argument("-f", type=str, default=DEF_INPUT_FILE)
     parser.add_argument("-tag", type=str, default='geant4')
-    parser.add_argument("-params", nargs='+', default=DEF_PARAMS)
+    parser.add_argument("-params", nargs='+', default=sc_v6)
     parser.add_argument("-z", type=float, default=0.1)
     
     args = parser.parse_args()
@@ -86,7 +90,7 @@ if __name__ == '__main__':
     input_file = args.f
     z_bias = 50
     input_dist = args.z
-    sensitive_film_params = {'dz': 0.01, 'dx': 3, 'dy': 5}
+    sensitive_film_params = {'dz': 0.01, 'dx': 6, 'dy': 10, 'position':0}
 
     with gzip.open(input_file, 'rb') as f:
         data = pickle.load(f)
@@ -113,10 +117,7 @@ if __name__ == '__main__':
 
     print(f"Workload of {division} samples spread over {cores} cores took {t2 - t1:.2f} seconds.")
     all_results = np.concatenate(all_results, axis=0)
-    with gzip.open('data/outputs.pkl', "wb") as f:
+    with gzip.open(f'data/outputs/outputs_{tag}.pkl', "wb") as f:
         pickle.dump(all_results, f)
     print('Data Shape', all_results.shape)
-    print(np.unique(all_results[:,-1],return_counts = True))
-    #with gzip.open(f'data/results_{tag}.pkl', 'wb') as f:
-    #    pickle.dump(all_results, f)
 

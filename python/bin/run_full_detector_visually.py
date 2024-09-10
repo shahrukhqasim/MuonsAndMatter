@@ -38,7 +38,7 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
 
 
         else: 
-            params = sc_v6
+            params = combi
         if len(params)==42: #shield might have 14 fixed parameters
                     params = np.insert(params,0,[70.0, 170.0])
                     params = np.insert(params,8,[40.0, 40.0, 150.0, 150.0, 2.0, 2.0, 80.0, 80.0, 150.0, 150.0, 2.0, 2.0])
@@ -52,7 +52,7 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
         detector = get_design_8(z_bias=z_bias, force_remove_magnetic_field=False)
 
     # with gzip.open('data/oliver_data_enriched_from_design_9.pkl', 'rb') as f:
-    with gzip.open('data/oliver_data_enriched.pkl', 'rb') as f:
+    with gzip.open('data/inputs.pkl', 'rb') as f:
         data = pickle.load(f)
 
     px = data[:, 0]
@@ -60,12 +60,8 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
     pz = data[:, 2]
     pt = np.sqrt(px ** 2 + py ** 2)
     p_mag = np.sqrt(px ** 2 + py ** 2 + pz ** 2)
-    filt = np.logical_and(pt < 1, p_mag > 15)
-    px = px[filt]*0
-    py = py[filt]*0
-    pz = pz[filt]*0+100
-
-
+    z = data[:, 5]
+    z += 25
 
     with open('data/gdetector.json', 'w') as f:
         json.dump(detector, f)
@@ -105,12 +101,9 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
     if type(N_samples) is tuple:
         N_samples = N_samples[0]
 
-    # px = np.random.normal(mu_x, std_x, N_samples)
-    # py = np.random.normal(mu_y, std_y, N_samples)
-    # pz = np.random.exponential(lambda_z, N_samples)
     zpos = 0.1
     zpos = detector['magnets'][0]['z_center'] - detector['magnets'][0]['dz']/2 - zpos
-
+    
     charge = np.random.randint(2, size=N_samples)
     charge[charge == 0] = -1
 
@@ -121,16 +114,26 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
             data_sensitive = collect_from_sensitive()
             muon_data_sensitive += [data_sensitive]
         muon_data += [data]
-    simulate_muon_(muon_data, muon_data_sensitive, 0, 0, 100, 1, 0, 0, zpos)
-    simulate_muon_(muon_data, muon_data_sensitive,  0, 0, np.max(pz), 1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
-    simulate_muon_(muon_data, muon_data_sensitive, px[np.argmax(pt)], py[np.argmax(pt)], pz[np.argmax(pt)], 1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
-    simulate_muon_(muon_data, muon_data_sensitive, 0, 0, 100, -1, 0, 0, zpos)
-    simulate_muon_(muon_data, muon_data_sensitive,  0, 0, np.max(pz), -1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
-    simulate_muon_(muon_data, muon_data_sensitive, px[np.argmax(pt)], py[np.argmax(pt)], pz[np.argmax(pt)], -1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
+    #simulate_muon_(muon_data, muon_data_sensitive, 0, 0, 100, 1, 0, 0, zpos)
+    #simulate_muon_(muon_data, muon_data_sensitive,  0, 0, np.max(pz), 1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
+    #simulate_muon_(muon_data, muon_data_sensitive, px[np.argmax(pt)], py[np.argmax(pt)], pz[np.argmax(pt)], 1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
+    #simulate_muon_(muon_data, muon_data_sensitive, 0, 0, 100, -1, 0, 0, zpos)
+    #simulate_muon_(muon_data, muon_data_sensitive,  0, 0, np.max(pz), -1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
+    #simulate_muon_(muon_data, muon_data_sensitive, px[np.argmax(pt)], py[np.argmax(pt)], pz[np.argmax(pt)], -1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
+
+    simulate_muon_(muon_data, muon_data_sensitive, 0, 0, 100, 1, 0, 0, z[0])
+    simulate_muon_(muon_data, muon_data_sensitive,  0, 0, np.max(pz), 1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), z[1])
+    simulate_muon_(muon_data, muon_data_sensitive, px[np.argmax(pt)], py[np.argmax(pt)], pz[np.argmax(pt)], 1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), z[2])
+    simulate_muon_(muon_data, muon_data_sensitive, 0, 0, 100, -1, 0, 0, z[3])
+    simulate_muon_(muon_data, muon_data_sensitive,  0, 0, np.max(pz), -1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), z[4])
+    simulate_muon_(muon_data, muon_data_sensitive, px[np.argmax(pt)], py[np.argmax(pt)], pz[np.argmax(pt)], -1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), z[5])
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-
+    #dz = 0
+    #for i in detector['magnets']:
+    #    dz+=detector['magnets'][0]['dz']
+    #print('LEN', dz)
     magnets = detector['magnets']
     draw_detector = True
     if draw_detector:
