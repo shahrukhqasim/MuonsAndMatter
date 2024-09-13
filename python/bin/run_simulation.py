@@ -117,7 +117,7 @@ if __name__ == '__main__':
         resulting_data,weight = rr
         all_results += [resulting_data]
 
-    print(f"Workload of {workloads.shape[-1]} samples spread over {cores} cores took {t2 - t1:.2f} seconds.")
+    print(f"Workload of {np.shape(workloads)[-1]} samples spread over {cores} cores took {t2 - t1:.2f} seconds.")
     all_results = np.concatenate(all_results, axis=0)
     with gzip.open(f'data/outputs/outputs_{tag}.pkl', "wb") as f:
         pickle.dump(all_results, f)
