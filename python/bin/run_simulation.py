@@ -1,8 +1,16 @@
 
 import json
 import numpy as np
-from muon_slabs import simulate_muon, initialize, collect, kill_secondary_tracks, collect_from_sensitive
 from lib.ship_muon_shield import get_design_from_params
+from muon_slabs import simulate_muon, initialize, collect, kill_secondary_tracks, collect_from_sensitive
+
+def split_array(arr, K):
+    N = len(arr)
+    base_size = N // K
+    remainder = N % K
+    sizes = [base_size + 1 if i < remainder else base_size for i in range(K)]
+    splits = np.split(arr, np.cumsum(sizes)[:-1])
+    return splits
 
 def run(muons, 
         phi, 
@@ -11,7 +19,7 @@ def run(muons,
         return_weight = False,
         fSC_mag:bool = True,
         sensitive_film_params:dict = {'dz': 0.01, 'dx': 100, 'dy': 100,'position':0}):
-    
+
     if type(muons) is tuple:
         muons = muons[0]
 
@@ -63,10 +71,7 @@ def run(muons,
     else: return muon_data_s
 
 
-
-
-
-DEF_INPUT_FILE = 'data/subsample.pkl'#'data/oliver_data_enriched.pkl'
+DEF_INPUT_FILE = '/home/hep/lprate/projects/MuonsAndMatter/data/inputs.pkl'#'data/oliver_data_enriched.pkl'
 if __name__ == '__main__':
     import argparse
     import gzip
@@ -81,7 +86,8 @@ if __name__ == '__main__':
     parser.add_argument("-tag", type=str, default='geant4')
     parser.add_argument("-params", nargs='+', default=sc_v6)
     parser.add_argument("-z", type=float, default=0.1)
-    
+    parser.add_argument("-shuffle_input", action = 'store_true')
+
     args = parser.parse_args()
     tag = args.tag
     cores = args.c
@@ -94,28 +100,24 @@ if __name__ == '__main__':
 
     with gzip.open(input_file, 'rb') as f:
         data = pickle.load(f)
-    #np.random.shuffle(data)
+    if args.shuffle_input: np.random.shuffle(data)
     if 0<n_muons<=data.shape[0]:
         data = data[:n_muons]
         cores = min(cores,n_muons)
 
-    division = int(len(data) / (cores-1))
-    workloads = []
-    for i in range(cores-1):
-        workloads.append(data[i * division:(i + 1) * division, :])
-    workloads.append(data[(i + 1) * division:, :])
-
+    workloads = split_array(data,cores)
     t1 = time.time()
     with mp.Pool(cores) as pool:
         result = pool.starmap(run, [(workload,params,z_bias,input_dist,True,sensitive_film_params) for workload in workloads])
     t2 = time.time()
+        #time.sleep(10)
 
     all_results = []
     for i, rr in enumerate(result):
         resulting_data,weight = rr
         all_results += [resulting_data]
 
-    print(f"Workload of {division} samples spread over {cores} cores took {t2 - t1:.2f} seconds.")
+    print(f"Workload of {workloads.shape[-1]} samples spread over {cores} cores took {t2 - t1:.2f} seconds.")
     all_results = np.concatenate(all_results, axis=0)
     with gzip.open(f'data/outputs/outputs_{tag}.pkl', "wb") as f:
         pickle.dump(all_results, f)
