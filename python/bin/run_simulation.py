@@ -110,14 +110,13 @@ if __name__ == '__main__':
     with mp.Pool(cores) as pool:
         result = pool.starmap(run, [(workload,params,z_bias,input_dist,True,sensitive_film_params) for workload in workloads])
     t2 = time.time()
-        #time.sleep(10)
 
     all_results = []
     for i, rr in enumerate(result):
         resulting_data,weight = rr
         all_results += [resulting_data]
 
-    print(f"Workload of {np.shape(workloads)[-1]} samples spread over {cores} cores took {t2 - t1:.2f} seconds.")
+    print(f"Workload of {np.shape(workloads[0])[0]} samples spread over {cores} cores took {t2 - t1:.2f} seconds.")
     all_results = np.concatenate(all_results, axis=0)
     with gzip.open(f'data/outputs/outputs_{tag}.pkl', "wb") as f:
         pickle.dump(all_results, f)
