@@ -18,7 +18,7 @@ def run(muons,
         input_dist:float = 0.1,
         return_weight = False,
         fSC_mag:bool = True,
-        sensitive_film_params:dict = {'dz': 0.01, 'dx': 10, 'dy': 11,'position':57},
+        sensitive_film_params:dict = {'dz': 0.01, 'dx': 100, 'dy': 100,'position':0},
         seed:int = None):
 
     if type(muons) is tuple:
@@ -47,13 +47,15 @@ def run(muons,
     # set_kill_momenta(65)
     kill_secondary_tracks(True)
     px,py,pz,x,y,z,charge = muons.T
-    assert((np.abs(charge)==1).all())
     if input_dist is not None:
         z_pos = detector['magnets'][0]['z_center'] - detector['magnets'][0]['dz']-input_dist
         z = z_pos*np.ones_like(z)
-    else:
-        z = detector['magnets'][0]['z_center'] - detector['magnets'][0]['dz'] + z
+    else: 
+        z = np.asarray(z) - np.max(z)
+        z += detector['magnets'][0]['z_center'] - detector['magnets'][0]['dz']
+    #muon_data = []
     muon_data_s = []
+    muon_inputs = []
     for i in range(len(px)):
         simulate_muon(px[i], py[i], pz[i], int(charge[i]), x[i],y[i], z[i])
         #data = collect()
@@ -64,10 +66,16 @@ def run(muons,
                while int(abs(data_s['pdg_id'][j])) != 13:
                    j += 1
                muon_data_s += [[data_s['px'][j], data_s['py'][j], data_s['pz'][j],data_s['x'][j], data_s['y'][j], data_s['z'][j],data_s['pdg_id'][j]]]
+               muon_inputs += [[px[i], py[i], pz[i], x[i],y[i], z[i], -13*int(charge[i])]]
     #muon_data = np.asarray(muon_data)
+    dz = 0
+    for i in detector['magnets']:
+        dz+=i['dz']
     muon_data_s = np.asarray(muon_data_s)
+    muon_inputs = np.asarray(muon_inputs)
+    print('TOTAL LENGTH', dz)
     if return_weight: return muon_data_s, output_data['weight_total']
-    else: return muon_data_s
+    else: return muon_data_s,muon_inputs
 
 
 DEF_INPUT_FILE = '/home/hep/lprate/projects/MuonsAndMatter/data/inputs.pkl'#'data/oliver_data_enriched.pkl'
@@ -85,10 +93,8 @@ if __name__ == '__main__':
     parser.add_argument("--f", type=str, default=DEF_INPUT_FILE)
     parser.add_argument("-tag", type=str, default='geant4')
     parser.add_argument("-params", nargs='+', default=sc_v6)
-    parser.add_argument("--z", type=float, default=None)
-    parser.add_argument("--sens_plane", type=float, default=57)
+    parser.add_argument("--z", type=float, default=0.1)
     parser.add_argument("-shuffle_input", action = 'store_true')
-    
 
     args = parser.parse_args()
     tag = args.tag
@@ -98,13 +104,10 @@ if __name__ == '__main__':
     input_file = args.f
     z_bias = 50
     input_dist = args.z
-    sensitive_film_params = {'dz': 0.01, 'dx': 20, 'dy': 20, 'position':args.sens_plane}
+    sensitive_film_params = {'dz': 0.01, 'dx': 20, 'dy': 20, 'position':0}
 
     with gzip.open(input_file, 'rb') as f:
         data = pickle.load(f)
-
-
-
     if args.shuffle_input: np.random.shuffle(data)
     if 0<n_muons<=data.shape[0]:
         data = data[:n_muons]
@@ -113,17 +116,23 @@ if __name__ == '__main__':
     workloads = split_array(data,cores)
     t1 = time.time()
     with mp.Pool(cores) as pool:
-        result = pool.starmap(run, [(workload,params,z_bias,input_dist,True,True,sensitive_film_params,args.seed) for workload in workloads])
+        result = pool.starmap(run, [(workload,params,z_bias,input_dist,False,True,sensitive_film_params,args.seed) for workload in workloads])
     t2 = time.time()
 
-    all_results = []
+    out_results = []
+    in_results = []
     for i, rr in enumerate(result):
-        resulting_data,weight = rr
-        all_results += [resulting_data]
+        resulting_data,input_data = rr
+        out_results += [resulting_data]
+        in_results += [input_data]
 
     print(f"Workload of {np.shape(workloads[0])[0]} samples spread over {cores} cores took {t2 - t1:.2f} seconds.")
-    all_results = np.concatenate(all_results, axis=0)
+    out_results = np.concatenate(out_results, axis=0)
+    in_results = np.concatenate(in_results, axis=0)
     with gzip.open(f'data/outputs/outputs_{tag}.pkl', "wb") as f:
-        pickle.dump(all_results, f)
-    print('Data Shape', all_results.shape)
+        pickle.dump(out_results, f)
+    with gzip.open(f'data/outputs/inputs_{tag}.pkl', "wb") as f:
+        pickle.dump(in_results, f)
+    print('Data Shape IN', in_results.shape)
+    print('Data Shape OUT', out_results.shape)
 
