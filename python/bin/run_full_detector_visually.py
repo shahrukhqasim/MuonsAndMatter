@@ -16,32 +16,28 @@ from lib.ship_muon_shield import get_design_from_params
 from tqdm import tqdm
 import pickle
 import argh
+from plot_magnet import plot_magnet
+from copy import deepcopy
 
-
-def main(design, output_file='plots/detector_visualization.png', params_file=None,
+def main(design = 100, output_file='plots/detector_visualization.png', params=None,
           sensitive_film_position:float = 57, fSC_mag:bool = True):
     design = int(design)
     assert design in {100, 9, 8}
 
     z_bias = 50
     if design == 100:
-        if params_file is not None:
-            params = []
-            # Open the file in read mode
-            with open(params_file, 'r') as file:
-                # Iterate over each line in the file
+        if params is None:
+            params = sc_v6
+        elif isinstance(params,str):
+            with open(params, 'r') as file:
+                params = []
                 for line in file:
-                    # Strip any leading/trailing whitespace (including newlines) and convert to float
                     number = float(line.strip())
-                    # Append the number to the list
                     params.append(number)
-
-
-        else: 
-            params = sc_v6#param_test
+            
         if len(params)==42: #shield might have 14 fixed parameters
-                    params = np.insert(params,0,[70.0, 170.0])
-                    params = np.insert(params,8,[40.0, 40.0, 150.0, 150.0, 2.0, 2.0, 80.0, 80.0, 150.0, 150.0, 2.0, 2.0])
+            params = np.insert(params,0,[70.0, 170.0])
+            params = np.insert(params,8,[40.0, 40.0, 150.0, 150.0, 2.0, 2.0, 80.0, 80.0, 150.0, 150.0, 2.0, 2.0])
     
 
         detector = get_design_from_params(params, z_bias=z_bias, force_remove_magnetic_field=False, fSC_mag=fSC_mag)
@@ -54,12 +50,9 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
     # with gzip.open('data/oliver_data_enriched_from_design_9.pkl', 'rb') as f:
     with gzip.open('data/inputs.pkl', 'rb') as f:
         data = pickle.load(f)
-
     px = data[:, 0]
     py = data[:, 1]
     pz = data[:, 2]
-    pt = np.sqrt(px ** 2 + py ** 2)
-    p_mag = np.sqrt(px ** 2 + py ** 2 + pz ** 2)
     #z = data[:, 5]
     #z += 25
 
@@ -116,17 +109,12 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
         muon_data += [data]
     simulate_muon_(muon_data, muon_data_sensitive, 0, 0, 100, 1, 0, 0, zpos)
     simulate_muon_(muon_data, muon_data_sensitive,  0, 0, np.max(pz), 1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
-    simulate_muon_(muon_data, muon_data_sensitive, px[np.argmax(pt)], py[np.argmax(pt)], pz[np.argmax(pt)], 1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
-    simulate_muon_(muon_data, muon_data_sensitive, 0, 0, 100, -1, 0, 0, zpos)
-    simulate_muon_(muon_data, muon_data_sensitive,  0, 0, np.max(pz), -1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
-    simulate_muon_(muon_data, muon_data_sensitive, px[np.argmax(pt)], py[np.argmax(pt)], pz[np.argmax(pt)], -1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
+    simulate_muon_(muon_data, muon_data_sensitive, np.max(py), np.max(py), pz[np.argmax(px)], 1, np.random.normal(0, 0.4), np.random.normal(0, 0.4), zpos)
 
     dz = 0
-    for i in detector['magnets']:
+    for n,i in enumerate(detector['magnets']):
         #print('components', i['components'])
+        print('Magnet ', n)
         try:
             print('DX = ', i['dx'])
             print('DY = ', i['dy'])
@@ -136,148 +124,58 @@ def main(design, output_file='plots/detector_visualization.png', params_file=Non
         print('Z in ', [i['z_center']-i['dz'],i['z_center']+i['dz']])
         dz+=i['dz']*2
     print('Total Magnets Length:', dz)
-
-    magnets = detector['magnets']
-    draw_detector = True
-    if draw_detector:
-        for mag in magnets:
-            z1 = -mag['dz']
-            z2 = +mag['dz']
-
-            for i, component in enumerate(mag['components']):
-                the_dat = component['corners']
-                field = component['field']
-                col = 'purple'
-                if field[0] < 0:
-                    col = 'red'
-                elif field[0] > 0:
-                    col = 'green'
-                elif field[1] < 0:
-                    col = 'red'
-                elif field[1] > 0:
-                    col = 'green'
-                elif field[2] < 0:
-                    col = 'blue'
-                elif field[2] > 0:
-                    col = 'blue'
-                corners = np.array(
-                    [
-                        [the_dat[0], the_dat[1], z1], [the_dat[2], the_dat[3], z1], [the_dat[4], the_dat[5], z1], [the_dat[6], the_dat[7], z1],
-                        [the_dat[0 + 8], the_dat[1 + 8], z2], [the_dat[2 + 8], the_dat[3 + 8], z2], [the_dat[4 + 8], the_dat[5 + 8], z2], [the_dat[6 + 8], the_dat[7 + 8], z2],
-                     ]
-                )
-                
-                corners[:, 2] += mag['z_center']
-                corners = np.array([[c[2], c[0], c[1]] for c in corners])
-                # Define the 12 edges connecting the corners
-                edges = [[corners[j] for j in [0, 1, 2, 3]],
-                         [corners[j] for j in [4, 5, 6, 7]],
-                         [corners[j] for j in [0, 1, 5, 4]],
-                         [corners[j] for j in [2, 3, 7, 6]],
-                         [corners[j] for j in [0, 3, 7, 4]],
-                         [corners[j] for j in [1, 2, 6, 5]]]
-
-                # # Plot the edges
-                ax.add_collection3d(Poly3DCollection(edges, facecolors=col, linewidths=0.07, edgecolors='r', alpha=.25))
-                #
-                # # Scatter plot of the corners
-                # ax.scatter3D(corners[:, 0], corners[:, 1], corners[:, 2], color='b', s=0.04)
-
-    if "sensitive_film" in detector:
-        cz, cx, cy = detector["sensitive_film"]["z_center"], 0, 0
-
-        # Calculate the half-sizes
-        hw = detector["sensitive_film"]["dx"] / 2
-        hl = detector["sensitive_film"]["dy"] / 2
-        hh = detector["sensitive_film"]["dz"] / 2
-
-        # Define the vertices of the box
-        vertices = np.array([
-            [cz - hh, cx - hw, cy - hl, ],
-            [cz - hh, cx + hw, cy - hl, ],
-            [cz - hh, cx + hw, cy + hl, ],
-            [cz - hh, cx - hw, cy + hl, ],
-            [cz + hh, cx - hw, cy - hl, ],
-            [cz + hh, cx + hw, cy - hl, ],
-            [cz + hh, cx + hw, cy + hl, ],
-            [cz + hh, cx - hw, cy + hl, ],
-        ])
-
-        # Define the edges of the box
-        edges = [
-            [vertices[j] for j in [0, 1, 2, 3]],  # bottom face
-            [vertices[j] for j in [4, 5, 6, 7]],  # top face
-            [vertices[j] for j in [0, 1, 5, 4]],  # front face
-            [vertices[j] for j in [2, 3, 7, 6]],  # back face
-            [vertices[j] for j in [1, 2, 6, 5]],  # right face
-            [vertices[j] for j in [0, 3, 7, 4]],  # left face
-        ]
-        box = Poly3DCollection(edges, facecolors='cyan', linewidths=1, edgecolors='r', alpha=.25)
-        ax.add_collection3d(box)
-
-    colors = plt.cm.get_cmap('tab10', 10)  # Get a colormap with 10 colors
-    for i, data in enumerate(muon_data):
-        x = data['x']
-        y = data['y']
-        z = data['z']
-        # Check if the number of items is more than 20
-        if len(x) > 20:
-            # Calculate the step size for downsampling
-            step = len(x) // 20
-            # Select elements at regular intervals
-            x = x[::step][:20]
-            y = y[::step][:20]
-            z = z[::step][:20]
-
-        # print(data)
-
-        ax.plot(z, x, y, color=colors(i), label=f'Muon {i + 1}')
-
-    total_sensitive_hits = 0
-    for i, data in enumerate(muon_data_sensitive):
-        x = data['x']
-        y = data['y']
-        z = data['z']
-        particle = data['pdg_id']
-        total_sensitive_hits += len(data['x'])
-        # print(len(x))
-        # # Check if the number of items is more than 20
-        # if len(x) > 20:
-        #     # Calculate the step size for downsampling
-        #     step = len(x) // 20
-        #     # Select elements at regular intervals
-        #     x = x[::step][:20]
-        #     y = y[::step][:20]
-        #     z = z[::step][:20]
-
-        # print(data)
-        ax.scatter(z[particle>0], x[particle>0], y[particle>0], color='red', label=f'Muon {i + 1}', s=3)
-        ax.scatter(z[particle<0], x[particle<0], y[particle<0], color='green', label=f'AntiMuon {i + 1}', s=3)
-
-
-    ax.set_xlim(-30+z_bias+sensitive_film_position, -70+z_bias)
-    ax.set_ylim(-20, 20)
-    ax.set_zlim(-20, 20)
-
-    # Adjust the view angle and zoom level
-    # ax.view_init(elev=20., azim=30)  # Adjust elevation and azimuth
-    # ax.dist = 6 # Smaller values zoom in, larger values zoom out
-
-    ax.set_xlabel('Z (m)')
-    ax.set_ylabel('X (m)')
-    ax.set_zlabel('Y (m)')
-    #ax.view_init(elev=17., azim=126)
-    ax.view_init(elev=17., azim=90)
-    fig.tight_layout()
-
-    if output_file is not None and output_file != '':
-        fig.savefig(output_file, dpi=600)
-
-    print("Total sensitive hits plotted", total_sensitive_hits)
-    plt.show()
-
+    print('Total Magnets Length real:', detector['magnets'][-1]['z_center']+detector['magnets'][-1]['dz'] - (detector['magnets'][0]['z_center']-detector['magnets'][0]['dz']))
+    plot_magnet(detector, output_file,
+                muon_data, z_bias,sensitive_film_position)
+    return output_data['weight_total']
 
 
 if __name__ == '__main__':
-    argh.dispatch_command(main)
+    from multiprocessing import Pool
+    from matplotlib.animation import FuncAnimation
+    import os
+    def GetBounds(zGap:float = 1.):
+        magnet_lengths = [(170 + zGap, 300 + zGap)] * 6  
+        dX_bounds = [(10, 100)] * 2
+        dY_bounds = [(20, 200)] * 2 
+        gap_bounds = [(2, 70)] * 2 
+        bounds = magnet_lengths + 6*(dX_bounds + dY_bounds + gap_bounds)
+        return np.array(bounds).T
+    num_frames = 10
+    SC_mag = False
+    
+    min_bound,max_bound = GetBounds()
+    relevant_parameters = range(len(sc_v6))
+    for p in relevant_parameters:
+        out_dir = f'plots/params/param_{p}'
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        weight = []
+        phi_range = np.linspace(min_bound[p],max_bound[p],num_frames)
+        for phi in phi_range:
+            params = deepcopy(baseline)#sc_v6)
+            params[p] = phi
+            name = os.path.join(out_dir,f'param_{p}_{phi:.0f}.png')
+            with Pool(1) as pool:
+                w= pool.starmap(main, [(100, name, params,3, SC_mag)])
+            weight.append(w)
+            #main(output_file=f'plots/params/param_{p}_{phi}.png', params=params, sensitive_film_position= 3)
+        plt.plot(phi_range,weight)
+        plt.xlabel(f'Param {p}')
+        plt.ylabel('Weight [kg]')
+        plt.grid()
+        plt.savefig(os.path.join(out_dir,f'weight_{p}'))
+        plt.close()
+        def update(frame):
+            ax.clear()  # Clear the previous frame
+            phi = phi_range[frame]
+            img = plt.imread(os.path.join(out_dir,f'param_{p}_{phi:.0f}.png'))  # Read the current frame
+            ax.imshow(img, aspect='auto')
+            ax.axis('off')  # Hide axes
+        fig, ax = plt.subplots()
+        fig.tight_layout()
+        ani = FuncAnimation(fig, update, frames=num_frames, repeat=True)
+        ani.save(os.path.join(out_dir,f'animation_{p}.gif'), writer='pillow', fps=20)
+
+    main(params=sc_v6,sensitive_film_position=5)#argh.dispatch_command(main)
 
