@@ -3,6 +3,7 @@ import json
 import numpy as np
 from lib.ship_muon_shield import get_design_from_params
 from muon_slabs import simulate_muon, initialize, collect, kill_secondary_tracks, collect_from_sensitive
+import os
 
 def split_array(arr, K):
     N = len(arr)
@@ -75,6 +76,7 @@ def run(muons,
     else: return muon_data_s
 
 
+
 DEF_INPUT_FILE = '/home/hep/lprate/projects/MuonsAndMatter/data/inputs.pkl'#'data/oliver_data_enriched.pkl'
 if __name__ == '__main__':
     import argparse
@@ -107,9 +109,6 @@ if __name__ == '__main__':
 
     with gzip.open(input_file, 'rb') as f:
         data = pickle.load(f)
-
-
-
     if args.shuffle_input: np.random.shuffle(data)
     if 0<n_muons<=data.shape[0]:
         data = data[:n_muons]
@@ -122,7 +121,7 @@ if __name__ == '__main__':
     t2 = time.time()
 
     all_results = []
-    for i, rr in enumerate(result):
+    for rr in result:
         resulting_data,weight = rr
         all_results += [resulting_data]
 

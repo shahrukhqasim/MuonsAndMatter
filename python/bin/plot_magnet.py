@@ -121,7 +121,7 @@ def plot_magnet(detector, output_file='plots/detector_visualization.png',
     ax.set_ylabel('X (m)')
     ax.set_zlabel('Y (m)')
     #ax.view_init(elev=17., azim=126)
-    ax.view_init(elev=17., azim=90)
+    ax.view_init(elev=17., azim=110)
     fig.tight_layout()
     fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=None, hspace=None)
 

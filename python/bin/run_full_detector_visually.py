@@ -115,10 +115,6 @@ def main(design = 100, output_file='plots/detector_visualization.png', params=No
     for n,i in enumerate(detector['magnets']):
         #print('components', i['components'])
         print('Magnet ', n)
-        try:
-            print('DX = ', i['dx'])
-            print('DY = ', i['dy'])
-        except: pass
         print('DZ = ', i['dz']*2)
         print('Z center = ', i['z_center'])
         print('Z in ', [i['z_center']-i['dz'],i['z_center']+i['dz']])
@@ -126,7 +122,7 @@ def main(design = 100, output_file='plots/detector_visualization.png', params=No
     print('Total Magnets Length:', dz)
     print('Total Magnets Length real:', detector['magnets'][-1]['z_center']+detector['magnets'][-1]['dz'] - (detector['magnets'][0]['z_center']-detector['magnets'][0]['dz']))
     plot_magnet(detector, output_file,
-                muon_data, z_bias,sensitive_film_position)
+                muon_data_sensitive, z_bias,sensitive_film_position)
     return output_data['weight_total']
 
 
@@ -142,10 +138,10 @@ if __name__ == '__main__':
         bounds = magnet_lengths + 6*(dX_bounds + dY_bounds + gap_bounds)
         return np.array(bounds).T
     num_frames = 10
-    SC_mag = False
+    SC_mag = True
     
     min_bound,max_bound = GetBounds()
-    relevant_parameters = range(len(sc_v6))
+    relevant_parameters = magnets_params[4]+magnets_params[5]+magnets_params[6]#range(len(sc_v6))
     for p in relevant_parameters:
         out_dir = f'plots/params/param_{p}'
         if not os.path.exists(out_dir):
@@ -153,7 +149,7 @@ if __name__ == '__main__':
         weight = []
         phi_range = np.linspace(min_bound[p],max_bound[p],num_frames)
         for phi in phi_range:
-            params = deepcopy(baseline)#sc_v6)
+            params = deepcopy(sc_v6)
             params[p] = phi
             name = os.path.join(out_dir,f'param_{p}_{phi:.0f}.png')
             with Pool(1) as pool:
