@@ -1,8 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+
 def plot_magnet(detector, output_file='plots/detector_visualization.png',
-                muon_data = [], z_bias =50,sensitive_film_position = 57):
+                muon_data = [], z_bias =50,sensitive_film_position = 57,
+                fixed_zlim:bool = False):
     magnets = detector['magnets']
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -87,7 +89,10 @@ def plot_magnet(detector, output_file='plots/detector_visualization.png',
         x = data['x']
         y = data['y']
         z = data['z']
-        particle = data['pdg_id']
+
+        if 'pdg_id' in data: 
+            particle = data['pdg_id']  
+        else: particle = 13
         total_sensitive_hits += len(data['x'])
         # print(len(x))
         # # Check if the number of items is more than 20
@@ -103,8 +108,8 @@ def plot_magnet(detector, output_file='plots/detector_visualization.png',
         ax.scatter(z[particle>0], x[particle>0], y[particle>0], color='red', label=f'Muon {i + 1}', s=3)
         ax.scatter(z[particle<0], x[particle<0], y[particle<0], color='green', label=f'AntiMuon {i + 1}', s=3)
 
-
-    ax.set_xlim(-30+z_bias+sensitive_film_position, -70+z_bias)
+    if fixed_zlim: ax.set_xlim(-30+z_bias+sensitive_film_position, detector['magnets'][0]['z_center'] - detector['magnets'][0]['dz']-5)
+    else: ax.set_xlim(30, -15)
     ax.set_ylim(-20, 20)
     ax.set_zlim(-20, 20)
 
@@ -118,9 +123,10 @@ def plot_magnet(detector, output_file='plots/detector_visualization.png',
     #ax.view_init(elev=17., azim=126)
     ax.view_init(elev=17., azim=90)
     fig.tight_layout()
+    fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=None, hspace=None)
 
     if output_file is not None and output_file != '':
-        fig.savefig(output_file, dpi=600)
+        fig.savefig(output_file, dpi=600, bbox_inches='tight', pad_inches=0)
 
     print("Total sensitive hits plotted", total_sensitive_hits)
-    plt.show()
+    plt.close()
