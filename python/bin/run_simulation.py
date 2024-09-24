@@ -46,8 +46,11 @@ def run(muons,
     # set_field_value(1,0,0)
     # set_kill_momenta(65)
     kill_secondary_tracks(True)
-    px,py,pz,x,y,z,charge = muons.T
+    if muons.shape[-1] == 8: px,py,pz,x,y,z,charge,W = muons.T
+    else: px,py,pz,x,y,z,charge = muons.T
+    if (np.abs(charge)==13).all(): charge = charge/(-13)
     assert((np.abs(charge)==1).all())
+
     if input_dist is not None:
         z_pos = detector['magnets'][0]['z_center'] - detector['magnets'][0]['dz']-input_dist
         z = z_pos*np.ones_like(z)
@@ -63,7 +66,9 @@ def run(muons,
                j = 0
                while int(abs(data_s['pdg_id'][j])) != 13:
                    j += 1
-               muon_data_s += [[data_s['px'][j], data_s['py'][j], data_s['pz'][j],data_s['x'][j], data_s['y'][j], data_s['z'][j],data_s['pdg_id'][j]]]
+               output_s = [data_s['px'][j], data_s['py'][j], data_s['pz'][j],data_s['x'][j], data_s['y'][j], data_s['z'][j],data_s['pdg_id'][j]]
+               if muons.shape[-1] == 8: output_s.append(W[i])
+               muon_data_s += [output_s]
     #muon_data = np.asarray(muon_data)
     muon_data_s = np.asarray(muon_data_s)
     if return_weight: return muon_data_s, output_data['weight_total']
@@ -77,7 +82,7 @@ if __name__ == '__main__':
     import pickle
     import time
     import multiprocessing as mp
-    from lib.reference_designs.params import *
+    from lib.reference_designs.params import sc_v6
     parser = argparse.ArgumentParser()
     parser.add_argument("--n", type=int, default=0)
     parser.add_argument("--c", type=int, default=45)
@@ -122,6 +127,7 @@ if __name__ == '__main__':
         all_results += [resulting_data]
 
     print(f"Workload of {np.shape(workloads[0])[0]} samples spread over {cores} cores took {t2 - t1:.2f} seconds.")
+    print(f"Weight = {weight} kg")
     all_results = np.concatenate(all_results, axis=0)
     with gzip.open(f'data/outputs/outputs_{tag}.pkl', "wb") as f:
         pickle.dump(all_results, f)
