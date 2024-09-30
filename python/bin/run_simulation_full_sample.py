@@ -1,7 +1,7 @@
 
 import numpy as np
 import os
-from run_simulation import run, split_array
+import torch
 import sys
 PROJECTS_DIR = os.getenv('PROJECTS_DIR')
 sys.path.insert(1, os.path.join(PROJECTS_DIR,'BlackBoxOptimization/src'))
@@ -14,70 +14,118 @@ def extract_number_from_string(s):
             number_str += char
     return int(number_str)
 
-def run(phi,inputs_dir:str,outputs_dir:str, cores:int = 384,sensitive_film_params = 57, input_dist:float=0.045,z_bias = 50, seed = 1):
+def get_total_hits(phi,inputs_dir:str,
+        outputs_dir:str, 
+        cores:int = 384,
+        seed = 1,
+        tag = ''):
     SHIP = ShipMuonShieldCluster(cores = cores,
                  loss_with_weight = False,
                  manager_ip='34.65.198.159',
                  port=444,
                  seed = seed)
     n_muons_total = 0
+    n_muons_unweighted = 0
     n_hits_total = 0
     all_results = {}
-    for name in os.listdir():
+    for name in os.listdir(inputs_dir):
+        n_name = extract_number_from_string(name)
         print('FILE:', name)
         with gzip.open(os.path.join(inputs_dir,name), 'rb') as f:
             factor = pickle.load(f)[:,-1]
         SHIP.n_samples = factor.shape[0]
         n_muons = factor.sum()
         n_muons_total += n_muons
-        n_hits = SHIP(phi)
+        n_hits = SHIP(phi,file = n_name).item()
         n_hits_total += n_hits
-        all_results[extract_number_from_string(name)] = (n_muons,n_hits)
-        with gzip.open(os.path.join(outputs_dir,f'num_muons_hits.pkl'), "wb") as f:
+        n_muons_unweighted += len(factor)
+        all_results[n_name] = (n_muons,n_hits)
+        with gzip.open(os.path.join(outputs_dir,f'num_muons_hits_{tag}.pkl'), "wb") as f:
             pickle.dump(all_results, f)
+        print('N EVENTS: ', len(factor))
         print('N MUONS: ', n_muons)
         print('N_HITS: ', n_hits)
-    return n_muons_total,n_hits_total
+        print('Survival rate: ', n_hits/n_muons)
+    return n_muons_total,n_hits_total, n_muons_unweighted
 
+def get_loss(phi,inputs_dir:str,
+        outputs_dir:str, 
+        cores:int = 384,
+        seed = 1,
+        tag = ''):
+    SHIP = ShipMuonShieldCluster(cores = cores,
+                 loss_with_weight = False,
+                 manager_ip='34.65.198.159',
+                 port=444,
+                 seed = seed)
+    total_loss = 0
+    all_results = {}
+    for name in os.listdir(inputs_dir):
+        n_name = extract_number_from_string(name)
+        print('FILE:', name)
+        with gzip.open(os.path.join(inputs_dir,name), 'rb') as f:
+            factor = pickle.load(f)[:,-1]
+        SHIP.n_samples = factor.shape[0]
+        loss = SHIP(phi,file = n_name).item()-1
+        total_loss += loss
+        all_results[n_name] = loss
+        with gzip.open(os.path.join(outputs_dir,f'total_loss_{tag}.pkl'), "wb") as f:
+            pickle.dump(all_results, f)
+        print('MUONS LOSS: ', loss)
+    return total_loss
 
+sc_v6 = [0,353.078,125.083,184.834,150.193,186.812,72,51,29,46,10,7,45.6888,
+         45.6888,22.1839,22.1839,27.0063,16.2448,10,31,35,31,51,11,24.7961,48.7639,8,104.732,15.7991,16.7793,3,100,192,192,2,
+         4.8004,3,100,8,172.729,46.8285,2]
 INPUTS_DIR = '/home/hep/lprate/projects/MuonsAndMatter/data/full_sample'
+OUTPUTS_DIR = '/home/hep/lprate/projects/MuonsAndMatter/data/outputs'
 if __name__ == '__main__':
     import argparse
     import gzip
     import pickle
     import time
-    import multiprocessing as mp
-    from lib.reference_designs.params import sc_v6
     parser = argparse.ArgumentParser()
-    parser.add_argument("--c", type=int, default=45)
+    parser.add_argument("-tag", type=str, default='')
+    parser.add_argument("-n_tasks", type=int, default=480)
     parser.add_argument("-seed", type=int, default=None)
-    parser.add_argument("-input_dir", type=str, default=INPUTS_DIR)
-    parser.add_argument("--p","-params", type='str', default=sc_v6)
-    parser.add_argument("--z", type=float, default=None)
-    parser.add_argument("--sens_plane", type=float, default=57)
-    parser.add_argument("-full_sample", action = 'store_true')
-    parser.add_argument("-concatenate", action = 'store_true')
+    parser.add_argument("-inputs_dir", type=str, default=INPUTS_DIR)
+    parser.add_argument("-outputs_dir", type=str, default=OUTPUTS_DIR)
+    parser.add_argument("-params", type=str, default=sc_v6)
+    #parser.add_argument("--z", type=float, default=0.1)
+    #parser.add_argument("--sens_plane", type=float, default=57)
+    parser.add_argument("-calc_loss", action = 'store_true')
     args = parser.parse_args()
     
     if isinstance(args.params,str):
+        print('Using parameters from ', args.params)
         with open(args.params, 'r') as file:
             params = []
             for line in file:
                 number = float(line.strip())
                 params.append(number)
+    else: params = args.params
+    params = torch.tensor(params)
     
-    z_bias = 50
-    input_dist = args.z
-    sensitive_film_params = {'dz': 0.01, 'dx': 6, 'dy': 10, 'position':args.sens_plane}
+    #input_dist = args.z
+    #sensitive_film_params = {'dz': 0.01, 'dx': 4, 'dy': 6, 'position':args.sens_plane}
 
-
-    
     t1 = time.time()
-    n_muons,n_hits = run(params,args.inputs_dir,args.outputs_dir, 
-        cores = args.c,sensitive_film_params = sensitive_film_params,
-        seed = args.seed, input_dist=args.z,z_bias = z_bias)
+    if args.calc_loss:
+        loss = get_loss(params,args.inputs_dir,args.outputs_dir, 
+        cores = args.n_tasks,
+        seed = args.seed,
+        tag = args.tag)
+        print(f'TOTAL MUONS LOSS: {loss}')
+    else:
+        n_muons,n_hits, n_un = get_total_hits(params,args.inputs_dir,args.outputs_dir, 
+        cores = args.n_tasks,#sensitive_film_params = sensitive_film_params,
+        seed = args.seed, #input_dist=args.z,
+        tag = args.tag)
+        print(f'number of events: {n_un}')
+        print(f'INPUT MUONS: {n_muons}')
+        print(f'HITS: {n_hits}')
+        print(f'Muons survival rate: {n_hits/n_muons}')
     t2 = time.time()
-    print(f'INPUT MUONS: {n_muons}')
+    
     print(f'TOTAL TIME: {(t2-t1):.3f}')
-    print(f'HITS: {n_hits}')
-    print(f'Muons survival rate:: {n_hits/n_muons}')
+    

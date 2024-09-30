@@ -8,7 +8,6 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from muon_slabs import simulate_muon, initialize, collect, kill_secondary_tracks, collect_from_sensitive
 from lib.reference_designs.params_design_9 import get_design as get_design_9
 from lib.reference_designs.params_design_8 import get_design as get_design_8
-from lib.reference_designs.params_design_8_ref import get_design as get_design_8_ref
 from lib.reference_designs.params import *
 # from magnet_paramsX import *
 import time
@@ -94,7 +93,7 @@ def main(design = 100, output_file='plots/detector_visualization.png', params=No
     if type(N_samples) is tuple:
         N_samples = N_samples[0]
 
-    zpos = 0.045
+    zpos = 0.845
     zpos = detector['magnets'][0]['z_center'] - detector['magnets'][0]['dz'] - zpos
     
     charge = np.random.randint(2, size=N_samples)
@@ -122,7 +121,7 @@ def main(design = 100, output_file='plots/detector_visualization.png', params=No
     print('Total Magnets Length:', dz)
     print('Total Magnets Length real:', detector['magnets'][-1]['z_center']+detector['magnets'][-1]['dz'] - (detector['magnets'][0]['z_center']-detector['magnets'][0]['dz']))
     plot_magnet(detector, output_file,
-                muon_data_sensitive, z_bias,sensitive_film_position)
+                muon_data, z_bias,sensitive_film_position, azim = 120)
     return output_data['weight_total']
 
 
@@ -130,48 +129,8 @@ if __name__ == '__main__':
     from multiprocessing import Pool
     from matplotlib.animation import FuncAnimation
     import os
-    def GetBounds(zGap:float = 1.):
-        magnet_lengths = [(170 + zGap, 300 + zGap)] * 6  
-        dX_bounds = [(10, 100)] * 2
-        dY_bounds = [(20, 200)] * 2 
-        gap_bounds = [(2, 70)] * 2 
-        bounds = magnet_lengths + 6*(dX_bounds + dY_bounds + gap_bounds)
-        return np.array(bounds).T
-    num_frames = 10
-    SC_mag = True
-    
-    min_bound,max_bound = GetBounds()
-    relevant_parameters = magnets_params[4]+magnets_params[5]+magnets_params[6]#range(len(sc_v6))
-    for p in relevant_parameters:
-        out_dir = f'plots/params/param_{p}'
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir)
-        weight = []
-        phi_range = np.linspace(min_bound[p],max_bound[p],num_frames)
-        for phi in phi_range:
-            params = deepcopy(sc_v6)
-            params[p] = phi
-            name = os.path.join(out_dir,f'param_{p}_{phi:.0f}.png')
-            with Pool(1) as pool:
-                w= pool.starmap(main, [(100, name, params,3, SC_mag)])
-            weight.append(w)
-            #main(output_file=f'plots/params/param_{p}_{phi}.png', params=params, sensitive_film_position= 3)
-        plt.plot(phi_range,weight)
-        plt.xlabel(f'Param {p}')
-        plt.ylabel('Weight [kg]')
-        plt.grid()
-        plt.savefig(os.path.join(out_dir,f'weight_{p}'))
-        plt.close()
-        def update(frame):
-            ax.clear()  # Clear the previous frame
-            phi = phi_range[frame]
-            img = plt.imread(os.path.join(out_dir,f'param_{p}_{phi:.0f}.png'))  # Read the current frame
-            ax.imshow(img, aspect='auto')
-            ax.axis('off')  # Hide axes
-        fig, ax = plt.subplots()
-        fig.tight_layout()
-        ani = FuncAnimation(fig, update, frames=num_frames, repeat=True)
-        ani.save(os.path.join(out_dir,f'animation_{p}.gif'), writer='pillow', fps=20)
-
-    main(params=sc_v6,sensitive_film_position=5)#argh.dispatch_command(main)
+    with open('/home/hep/lprate/projects/BlackBoxOptimization/outputs/complete_57_SC_new/phi_optm.txt', "r") as txt_file:
+        data = [float(line.strip()) for line in txt_file]
+    params = np.array(data)
+    main(params=params,sensitive_film_position=5)#argh.dispatch_command(main)
 

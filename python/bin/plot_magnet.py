@@ -1,10 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from lib.ship_muon_shield import get_design_from_params
 
 def plot_magnet(detector, output_file='plots/detector_visualization.png',
-                muon_data = [], z_bias =50,sensitive_film_position = 57,
-                fixed_zlim:bool = False):
+                muon_data = [], z_bias =50,sensitive_film_position = None,
+                fixed_zlim:bool = False, azim = 126):
     magnets = detector['magnets']
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -53,6 +54,7 @@ def plot_magnet(detector, output_file='plots/detector_visualization.png',
 
     if "sensitive_film" in detector:
         cz, cx, cy = detector["sensitive_film"]["z_center"], 0, 0
+        if sensitive_film_position is not None: cz = sensitive_film_position+detector['magnets'][-1]['z_center']+detector['magnets'][-1]['dz']
 
         # Calculate the half-sizes
         hw = detector["sensitive_film"]["dx"] / 2
@@ -84,29 +86,24 @@ def plot_magnet(detector, output_file='plots/detector_visualization.png',
         ax.add_collection3d(box)
 
     colors = plt.cm.get_cmap('tab10', 10)  # Get a colormap with 10 colors
-    total_sensitive_hits = 0
+    #total_sensitive_hits = 0
     for i, data in enumerate(muon_data):
-        x = data['x']
-        y = data['y']
-        z = data['z']
+        if isinstance(data,dict):
+            x = data['x']
+            y = data['y']
+            z = data['z']
 
-        if 'pdg_id' in data: 
-            particle = data['pdg_id']  
-        else: particle = 13
-        total_sensitive_hits += len(data['x'])
-        # print(len(x))
-        # # Check if the number of items is more than 20
-        # if len(x) > 20:
-        #     # Calculate the step size for downsampling
-        #     step = len(x) // 20
-        #     # Select elements at regular intervals
-        #     x = x[::step][:20]
-        #     y = y[::step][:20]
-        #     z = z[::step][:20]
+            if 'pdg_id' in data: 
+                particle = data['pdg_id']  
+            else: particle = 13
+        else:
+            _,_,_,x,y,z,particle = data
+            if sensitive_film_position is not None: z = sensitive_film_position*np.ones_like(z)+detector['magnets'][-1]['z_center']+detector['magnets'][-1]['dz']
+        
+        #total_sensitive_hits += 1
 
-        # print(data)
-        ax.scatter(z[particle>0], x[particle>0], y[particle>0], color='red', label=f'Muon {i + 1}', s=3)
-        ax.scatter(z[particle<0], x[particle<0], y[particle<0], color='green', label=f'AntiMuon {i + 1}', s=3)
+        ax.scatter(z[particle>0], x[particle>0], y[particle>0], color='blue', label=f'Muon {i + 1}', s=2)
+        ax.scatter(z[particle<0], x[particle<0], y[particle<0], color='orange', label=f'AntiMuon {i + 1}', s=2)
 
     if fixed_zlim: ax.set_xlim(-30+z_bias+sensitive_film_position, detector['magnets'][0]['z_center'] - detector['magnets'][0]['dz']-5)
     else: ax.set_xlim(30, -15)
@@ -121,12 +118,33 @@ def plot_magnet(detector, output_file='plots/detector_visualization.png',
     ax.set_ylabel('X (m)')
     ax.set_zlabel('Y (m)')
     #ax.view_init(elev=17., azim=126)
-    ax.view_init(elev=17., azim=110)
+    ax.view_init(elev=17., azim=azim)
     fig.tight_layout()
     fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=None, hspace=None)
 
     if output_file is not None and output_file != '':
         fig.savefig(output_file, dpi=600, bbox_inches='tight', pad_inches=0)
 
-    print("Total sensitive hits plotted", total_sensitive_hits)
+    #print("Total sensitive hits plotted", total_sensitive_hits)
     plt.close()
+
+def construct_and_plot(muons, 
+        phi, 
+        z_bias=50,
+        fSC_mag:bool = True,
+        sensitive_film_params:dict = {'dz': 0.01, 'dx': 4, 'dy': 6,'position':57},
+        kwargs_plot = {}):
+    if len(phi)==42: #shield might have 14 fixed parameters
+        phi = np.insert(phi,0,[70.0, 170.0])
+        phi = np.insert(phi,8,[40.0, 40.0, 150.0, 150.0, 2.0, 2.0, 80.0, 80.0, 150.0, 150.0, 2.0, 2.0])
+
+    detector = get_design_from_params(params = phi,z_bias=z_bias,force_remove_magnetic_field=False,fSC_mag = fSC_mag)
+    for k,v in sensitive_film_params.items():
+        if k=='position': detector['sensitive_film']['z_center'] += v
+        else: detector['sensitive_film'][k] = v
+    plot_magnet(detector,
+                muon_data = muons, 
+                z_bias = z_bias,
+                sensitive_film_position = sensitive_film_params['position'],#sensitive_film_params['position'], 
+                **kwargs_plot)
+    

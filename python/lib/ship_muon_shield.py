@@ -417,7 +417,7 @@ def get_design_from_params(params, z_bias=50., force_remove_magnetic_field=False
     # print(shield)
     shield.update({
         "worldPositionX": 0, "worldPositionY": 0, "worldPositionZ": 0, "worldSizeX": 11, "worldSizeY": 11,
-        "worldSizeZ": 160,
+        "worldSizeZ": 180,
         "type" : 1,
         "limits" : {
             "max_step_length": -1,

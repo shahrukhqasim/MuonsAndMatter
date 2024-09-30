@@ -3,7 +3,8 @@ import json
 import numpy as np
 from lib.ship_muon_shield import get_design_from_params
 from muon_slabs import simulate_muon, initialize, collect, kill_secondary_tracks, collect_from_sensitive
-import os
+from copy import deepcopy
+from plot_magnet import plot_magnet, construct_and_plot
 
 def split_array(arr, K):
     N = len(arr)
@@ -20,7 +21,9 @@ def run(muons,
         return_weight = False,
         fSC_mag:bool = True,
         sensitive_film_params:dict = {'dz': 0.01, 'dx': 10, 'dy': 11,'position':57},
-        seed:int = None):
+        seed:int = None,
+        draw_magnet = False,
+        kwargs_plot = {}):
 
     if type(muons) is tuple:
         muons = muons[0]
@@ -49,6 +52,8 @@ def run(muons,
     kill_secondary_tracks(True)
     if muons.shape[-1] == 8: px,py,pz,x,y,z,charge,W = muons.T
     else: px,py,pz,x,y,z,charge = muons.T
+    
+
     if (np.abs(charge)==13).all(): charge = charge/(-13)
     assert((np.abs(charge)==1).all())
 
@@ -72,6 +77,13 @@ def run(muons,
                muon_data_s += [output_s]
     #muon_data = np.asarray(muon_data)
     muon_data_s = np.asarray(muon_data_s)
+    if draw_magnet: 
+        plot_magnet(detector,
+                muon_data = muon_data_s, 
+                z_bias = z_bias,
+                sensitive_film_position = 5,#sensitive_film_params['position'], 
+                **kwargs_plot)
+
     if return_weight: return muon_data_s, output_data['weight_total']
     else: return muon_data_s
 
@@ -92,20 +104,24 @@ if __name__ == '__main__':
     parser.add_argument("--f", type=str, default=DEF_INPUT_FILE)
     parser.add_argument("-tag", type=str, default='geant4')
     parser.add_argument("-params", nargs='+', default=sc_v6)
-    parser.add_argument("--z", type=float, default=None)
+    parser.add_argument("--z", type=float, default=0.1)
     parser.add_argument("--sens_plane", type=float, default=57)
     parser.add_argument("-shuffle_input", action = 'store_true')
+    parser.add_argument("-plot_magnet", action = 'store_true')
     
 
     args = parser.parse_args()
     tag = args.tag
     cores = args.c
-    params=list(args.params)
+    #params=list(args.params)
+    with open('/home/hep/lprate/projects/BlackBoxOptimization/outputs/complete_57_SC_new/phi_optm.txt', "r") as txt_file:
+        data = [float(line.strip()) for line in txt_file]
+    params = np.array(data)
     n_muons = args.n
     input_file = args.f
     z_bias = 50
     input_dist = args.z
-    sensitive_film_params = {'dz': 0.01, 'dx': 20, 'dy': 20, 'position':args.sens_plane}
+    sensitive_film_params = {'dz': 0.01, 'dx': 6, 'dy': 10, 'position':args.sens_plane}
 
     with gzip.open(input_file, 'rb') as f:
         data = pickle.load(f)
@@ -117,12 +133,13 @@ if __name__ == '__main__':
     workloads = split_array(data,cores)
     t1 = time.time()
     with mp.Pool(cores) as pool:
-        result = pool.starmap(run, [(workload,params,z_bias,input_dist,True,True,sensitive_film_params,args.seed) for workload in workloads])
+        result = pool.starmap(run, [(workload,params,z_bias,input_dist,True,True,sensitive_film_params,args.seed, args.plot_magnet) for workload in workloads])
     t2 = time.time()
 
     all_results = []
     for rr in result:
         resulting_data,weight = rr
+        if len(resulting_data)==0: continue
         all_results += [resulting_data]
 
     print(f"Workload of {np.shape(workloads[0])[0]} samples spread over {cores} cores took {t2 - t1:.2f} seconds.")
@@ -131,4 +148,7 @@ if __name__ == '__main__':
     with gzip.open(f'data/outputs/outputs_{tag}.pkl', "wb") as f:
         pickle.dump(all_results, f)
     print('Data Shape', all_results.shape)
-
+    sensitive_film_params['position'] = 5
+    if args.plot_magnet:
+        with mp.Pool(1) as pool:
+            result = pool.starmap(construct_and_plot, [(all_results,params,z_bias,True,sensitive_film_params)])

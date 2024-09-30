@@ -93,7 +93,7 @@ if __name__ == '__main__':
     parser.add_argument("--f", type=str, default=DEF_INPUT_FILE)
     parser.add_argument("-tag", type=str, default='geant4')
     parser.add_argument("-params", nargs='+', default=sc_v6)
-    parser.add_argument("--z", type=float, default=0.1)
+    parser.add_argument("--z", type=float, default=0.845)
     parser.add_argument("-shuffle_input", action = 'store_true')
 
     args = parser.parse_args()
