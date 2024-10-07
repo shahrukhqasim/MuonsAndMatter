@@ -52,7 +52,7 @@ def plot_magnet(detector, output_file='plots/detector_visualization.png',
             # # Scatter plot of the corners
             # ax.scatter3D(corners[:, 0], corners[:, 1], corners[:, 2], color='b', s=0.04)
 
-    if "sensitive_film" in detector:
+    if "sensitive_film" in detector  and sensitive_film_position is not None:
         cz, cx, cy = detector["sensitive_film"]["z_center"], 0, 0
         if sensitive_film_position is not None: cz = sensitive_film_position+detector['magnets'][-1]['z_center']+detector['magnets'][-1]['dz']
 
@@ -123,7 +123,7 @@ def plot_magnet(detector, output_file='plots/detector_visualization.png',
     fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=None, hspace=None)
 
     if output_file is not None and output_file != '':
-        fig.savefig(output_file, dpi=600, bbox_inches='tight', pad_inches=0)
+        fig.savefig(output_file, dpi=600, bbox_inches='tight', pad_inches=0,format = 'pdf', transparent=True)
 
     #print("Total sensitive hits plotted", total_sensitive_hits)
     plt.close()

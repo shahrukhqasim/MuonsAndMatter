@@ -18,7 +18,7 @@ import argh
 from plot_magnet import plot_magnet
 from copy import deepcopy
 
-def main(design = 100, output_file='plots/detector_visualization.png', params=None,
+def main(design = 100, output_file='plots/detector_visualization.pdf', params=None,
           sensitive_film_position:float = 57, fSC_mag:bool = True):
     design = int(design)
     assert design in {100, 9, 8}
@@ -66,7 +66,7 @@ def main(design = 100, output_file='plots/detector_visualization.png', params=No
 
     sensitive_film_params:dict = {'dz': 0.01, 'dx': 10, 'dy': 15, 'position':sensitive_film_position}
     for k,v in sensitive_film_params.items():
-        if k=='position': detector['sensitive_film']['z_center'] += v
+        if k=='position' and v is not None: detector['sensitive_film']['z_center'] += v
         else: detector['sensitive_film'][k] = v
 
     # detector["store_all"] = True
@@ -121,7 +121,7 @@ def main(design = 100, output_file='plots/detector_visualization.png', params=No
     print('Total Magnets Length:', dz)
     print('Total Magnets Length real:', detector['magnets'][-1]['z_center']+detector['magnets'][-1]['dz'] - (detector['magnets'][0]['z_center']-detector['magnets'][0]['dz']))
     plot_magnet(detector, output_file,
-                muon_data, z_bias,sensitive_film_position, azim = 120)
+                [], z_bias,sensitive_film_position, azim = 120)
     return output_data['weight_total']
 
 
@@ -132,5 +132,5 @@ if __name__ == '__main__':
     with open('/home/hep/lprate/projects/BlackBoxOptimization/outputs/complete_57_SC_new/phi_optm.txt', "r") as txt_file:
         data = [float(line.strip()) for line in txt_file]
     params = np.array(data)
-    main(params=params,sensitive_film_position=5)#argh.dispatch_command(main)
+    main(params=params,sensitive_film_position=None)#argh.dispatch_command(main)
 
