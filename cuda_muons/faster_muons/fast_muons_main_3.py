@@ -6,8 +6,8 @@ import pickle
 import gzip
 import torch
 
-from lib.helpers_cuda_muons import get_sample_arb8s
-from matplotlib.colors import LogNorm
+from cuda_muons.faster_muons.helpers_cuda_muons import get_sample_arb8s
+
 if os.path.exists('/disk/users/sqasim'):
     import faster_muons_torch
     server = True
@@ -15,7 +15,6 @@ else:
     from muon_slabs import cuda_test_propagate_muons
     server = False
 
-import tensorflow as tf
 from tqdm import tqdm
 
 def alias_setup(histogram):
