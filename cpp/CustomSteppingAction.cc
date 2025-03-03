@@ -27,6 +27,8 @@ CustomSteppingAction::CustomSteppingAction()
     killSecondary = false;
     store_all = false;
     store_primary = false;
+    is_single_step = false;
+    max_steps = -1;
 }
 
 CustomSteppingAction::~CustomSteppingAction()
@@ -35,9 +37,18 @@ CustomSteppingAction::~CustomSteppingAction()
 void CustomSteppingAction::UserSteppingAction(const G4Step* step)
 {
 
+
 //    std::cout<<"Hello from the CustomSteppingAction::UserSteppingAction!\n";
     // Get the track
     G4Track* track = step->GetTrack();
+
+    // Check if the track is going to be killed
+    if (track->GetTrackStatus() == fStopAndKill) {
+//        std::cout<<"Checkkkk\n";
+        // The track is marked to be killed
+        return;
+    }
+
 
     // Get the volume of the current step
     G4VPhysicalVolume* volume = step->GetPreStepPoint()->GetTouchableHandle()->GetVolume();
@@ -87,7 +98,7 @@ void CustomSteppingAction::UserSteppingAction(const G4Step* step)
         stepLength.push_back(step->GetStepLength() / m);
         chargeDeposit.push_back(step->GetTotalEnergyDeposit());
     }
-    if (killSecondary && track->GetTrackID() != primaryTrackId) {
+    if ((killSecondary && track->GetTrackID() != primaryTrackId) or is_single_step) {
         track->SetTrackStatus(fStopAndKill);
     }
     else {
@@ -101,7 +112,9 @@ void CustomSteppingAction::UserSteppingAction(const G4Step* step)
         }
     }
 
-
+    if (max_steps != -1 and num_steps >= max_steps) {
+        track->SetTrackStatus(fStopAndKill);
+    }
 
 
     // Get the G4ParticleDefinition from the G4Track
@@ -145,3 +158,12 @@ void CustomSteppingAction::setStoreAll(bool storeAll) {
 void CustomSteppingAction::setStorePrimary(bool storePrimary) {
     store_primary = storePrimary;
 }
+
+void CustomSteppingAction::setIsSingleStep(bool isSingleStep) {
+    is_single_step = isSingleStep;
+}
+
+void CustomSteppingAction::setMaxSteps(int maxSteps) {
+    max_steps = maxSteps;
+}
+

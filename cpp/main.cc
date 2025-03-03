@@ -52,6 +52,38 @@
 //    }
 //};
 
+// Function to load JSON from a file and return it as Json::Value
+Json::Value loadJsonFromFile(const std::string& filePath) {
+    // Open the file
+    std::ifstream inputFile(filePath);
+    if (!inputFile) {
+        std::cerr << "Unable to open file: " << filePath << std::endl;
+        return Json::Value(); // Return an empty Json::Value on failure
+    }
+
+    // Read file contents into a string
+    std::string fileContents;
+    std::string line;
+    while (std::getline(inputFile, line)) {
+        fileContents += line + "\n";
+    }
+
+    inputFile.close();
+
+    // Parse the JSON string
+    Json::Value jsonData;
+    Json::CharReaderBuilder readerBuilder;
+    std::string errs;
+    std::istringstream iss(fileContents);
+
+    if (Json::parseFromStream(readerBuilder, iss, &jsonData, &errs)) {
+        return jsonData; // Return the parsed JSON object
+    } else {
+        std::cerr << "Failed to parse JSON: " << errs << std::endl;
+        return Json::Value(); // Return an empty Json::Value on failure
+    }
+}
+
 
 int main(int argc, char** argv)
 {
@@ -64,37 +96,15 @@ int main(int argc, char** argv)
     // Construct the default run manager
     G4RunManager* runManager = new G4RunManager;
 
-//    std::ifstream inputFile("../../data/boxy.json");
-    std::ifstream inputFile("../../data/gdetector.json");
-    if (!inputFile) {
-        std::cerr << "Unable to open file";
-        return 1;
-    }
 
-    std::string fileContents;
-    std::string line;
-
-    while (std::getline(inputFile, line)) {
-        fileContents += line + "\n";
-    }
-
-    inputFile.close();
-
-    Json::Value detectorData;
-    Json::CharReaderBuilder readerBuilder;
-    std::string errs;
-
-    std::istringstream iss(fileContents);
-    if (Json::parseFromStream(readerBuilder, iss, &detectorData, &errs)) {
-        // Output the parsed JSON object
-        std::cout << detectorData["worldSizeX"] << std::endl;
-    } else {
-        std::cerr << "Failed to parse JSON: " << errs << std::endl;
-    }
+    Json::Value detectorData = loadJsonFromFile("../../data/gdetector.json");
+    Json::Value fairShipData = loadJsonFromFile("exported.json");
 
 
+    auto det = new GDetectorConstruction(detectorData);
+    det->setFairShipData(fairShipData);
     // Set mandatory initialization classes
-    runManager->SetUserInitialization(new GDetectorConstruction(fileContents));
+    runManager->SetUserInitialization(det);
 //    runManager->SetUserInitialization(new BoxyDetectorConstruction(fileContents));
 //    runManager->SetUserInitialization(new DetectorConstruction);
 

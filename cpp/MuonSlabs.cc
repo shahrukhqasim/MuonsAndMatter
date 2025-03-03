@@ -24,6 +24,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept> // For standard exceptions like std::runtime_error
+#include "FasterMuonsBeforeCuda.hh"
 
 
 namespace py = pybind11;
@@ -57,8 +58,6 @@ void simulate_muon(double px, double py, double pz, int charge,
     primariesGenerator->setNextCharge(charge);
 
     ui_manager->ApplyCommand(std::string("/run/beamOn ") + std::to_string(1));
-
-
 }
 
 py::dict collect_from_sensitive() {
@@ -172,8 +171,8 @@ py::dict collect() {
     return d;
 }
 
-void set_field_value(double strength, double theta, double phi) {
-    detector->setMagneticFieldValue(strength, theta, phi);
+void set_field_value(double x, double y, double z) {
+    detector->setMagneticFieldValue(x, y, z);
 }
 
 void set_kill_momenta(double kill_momenta) {
@@ -191,7 +190,6 @@ std::string initialize( int rseed_0,
     G4Random::setTheSeeds(seeds);
 
     runManager = new G4RunManager;
-
 
     bool applyStepLimiter = false;
     bool storeAll = false;
@@ -215,6 +213,7 @@ std::string initialize( int rseed_0,
 
         int type = detectorData["type"].asInt();
         applyStepLimiter = (detectorData["limits"]["max_step_length"].asDouble() > 0);
+        applyStepLimiter = applyStepLimiter or (detectorData["limits"]["minimum_kinetic_energy"].asDouble() > 0);
         if (type==3) {
             detector = new DetectorConstruction(detectorData);
         }
@@ -265,9 +264,6 @@ std::string initialize( int rseed_0,
     // Get the pointer to the User Interface manager
     ui_manager = G4UImanager::GetUIpointer();
 
-
-
-
     ui_manager->ApplyCommand(std::string("/run/initialize"));
     ui_manager->ApplyCommand(std::string("/run/printProgress 100"));
 
@@ -287,6 +283,14 @@ std::string initialize( int rseed_0,
 
 void kill_secondary_tracks(bool do_kill) {
     steppingAction->setKillSecondary(do_kill);
+}
+
+void is_single_step(bool is_single_step) {
+    steppingAction->setIsSingleStep(is_single_step);
+}
+
+void set_max_steps(int max_steps) {
+    steppingAction->setMaxSteps(max_steps);
 }
 
 void visualize() {
@@ -311,6 +315,100 @@ void visualize() {
 
 }
 
+
+// Define your CUDA test function
+py::array_t<float> cuda_test_propagate_muons(py::array_t<float> muon_data_positions,
+                                             py::array_t<float> muon_data_momenta,
+                                             py::array_t<float> hist_2d_probability_table,
+                                             py::array_t<int> hist_2d_alias_table,
+                                             py::array_t<float> hist_2d_step_length_vs_mag_all_probability_table,
+                                             py::array_t<int> hist_2d_step_length_vs_mag_all_alias_table,
+                                             py::array_t<float> hist_step_length_probability_table,
+                                             py::array_t<int> hist_step_length_alias_table,
+                                             py::array_t<float> hist_2d_bin_centers_first_dim,
+                                             py::array_t<float> hist_2d_bin_centers_second_dim,
+                                             py::array_t<float> hist_2d_bin_widths_first_dim,
+                                             py::array_t<float> hist_2d_bin_widths_second_dim,
+                                             float kill_at
+
+                                             ) {
+//    // Request read-only access to input arrays
+//    auto buf1 = input1.request(), buf2 = input2.request();
+//
+//    // Check that the input arrays have the same shape
+//    if (buf1.shape != buf2.shape) {
+//        throw std::runtime_error("Input shapes must match");
+//    }
+//
+//    // Number of elements
+//    ssize_t num_elements = buf1.size;
+//
+    // Create an output array with the same shape as input arrays
+    py::array_t<float> result(100);
+    auto buff_muon_data_positions = muon_data_positions.request(true);
+    auto buff_muon_data_momenta = muon_data_momenta.request(true);
+    auto buff_hist_2d_probability_table = hist_2d_probability_table.request();
+    auto buff_hist_2d_alias_table = hist_2d_alias_table.request();
+
+    auto buff_hist_2d_step_length_vs_mag_all_probability_table = hist_2d_step_length_vs_mag_all_probability_table.request();
+    auto buff_hist_2d_step_length_vs_mag_all_alias_table = hist_2d_step_length_vs_mag_all_alias_table.request();
+
+    auto buff_hist_step_length_probability_table = hist_step_length_probability_table.request();
+    auto buff_hist_step_length_alias_table = hist_step_length_alias_table.request();
+    auto buff_hist_2d_bin_centers_first_dim = hist_2d_bin_centers_first_dim.request();
+    auto buff_hist_2d_bin_centers_second_dim = hist_2d_bin_centers_second_dim.request();
+    auto buff_hist_2d_bin_widths_first_dim = hist_2d_bin_widths_first_dim.request();
+    auto buff_hist_2d_bin_widths_second_dim = hist_2d_bin_widths_second_dim.request();
+
+    auto ptr_muon_data_positions = static_cast<float*>(buff_muon_data_positions.ptr);
+    auto ptr_muon_data_momenta = static_cast<float*>(buff_muon_data_momenta.ptr);
+    auto ptr_hist_2d_probability_table = static_cast<float*>(buff_hist_2d_probability_table.ptr);
+    auto ptr_hist_2d_alias_table = static_cast<int*>(buff_hist_2d_alias_table.ptr);
+
+    auto ptr_hist_2d_step_length_vs_mag_all_probability_table = static_cast<float*>(buff_hist_2d_step_length_vs_mag_all_probability_table.ptr);
+    auto ptr_hist_2d_step_length_vs_mag_all_alias_table = static_cast<int*>(buff_hist_2d_step_length_vs_mag_all_alias_table.ptr);
+
+    auto ptr_hist_step_length_probability_table = static_cast<float*>(buff_hist_step_length_probability_table.ptr);
+    auto ptr_hist_step_length_alias_table = static_cast<int*>(buff_hist_step_length_alias_table.ptr);
+    auto ptr_hist_2d_bin_centers_first_dim = static_cast<float*>(buff_hist_2d_bin_centers_first_dim.ptr);
+    auto ptr_hist_2d_bin_centers_second_dim = static_cast<float*>(buff_hist_2d_bin_centers_second_dim.ptr);
+    auto ptr_hist_2d_bin_widths_first_dim = static_cast<float*>(buff_hist_2d_bin_widths_first_dim.ptr);
+    auto ptr_hist_2d_bin_widths_second_dim = static_cast<float*>(buff_hist_2d_bin_widths_second_dim.ptr);
+
+    int N = buff_muon_data_positions.shape[0];
+    int H_2d = buff_hist_2d_probability_table.shape[1];
+    int H_step_length = buff_hist_step_length_probability_table.shape[1];
+
+    cuda_test_propagate_muons_k(ptr_muon_data_positions,
+                              ptr_muon_data_momenta,
+                              ptr_hist_2d_probability_table,
+                              ptr_hist_2d_alias_table,
+                              ptr_hist_2d_step_length_vs_mag_all_probability_table,
+                              ptr_hist_2d_step_length_vs_mag_all_alias_table,
+                              ptr_hist_step_length_probability_table,
+                              ptr_hist_step_length_alias_table,
+                              ptr_hist_2d_bin_centers_first_dim,
+                              ptr_hist_2d_bin_centers_second_dim,
+                              ptr_hist_2d_bin_widths_first_dim,
+                              ptr_hist_2d_bin_widths_second_dim,
+                              kill_at,
+                              N,H_2d, H_step_length);
+
+//    // Request write access to the output array
+//    auto result_buf = result.request();
+//    float *result_ptr = static_cast<float *>(result_buf.ptr);
+//    const float *ptr1 = static_cast<const float *>(buf1.ptr);
+//    const float *ptr2 = static_cast<const float *>(buf2.ptr);
+//
+//    // Perform some computation (example: element-wise addition)
+//    for (ssize_t i = 0; i < num_elements; i++) {
+//        result_ptr[i] = ptr1[i] + ptr2[i];
+//    }
+
+    // Return the result
+    return result;
+}
+
 PYBIND11_MODULE(muon_slabs, m) {
     m.def("add", &add, "A function which adds two numbers");
     m.def("simulate_muon", &simulate_muon, "A function which simulates a muon through geant4 and returns the steps");
@@ -319,8 +417,11 @@ PYBIND11_MODULE(muon_slabs, m) {
     m.def("collect_from_sensitive", &collect_from_sensitive, "Collect back the data from the sensitive film placed");
     m.def("set_field_value", &set_field_value, "Set the magnetic field value");
     m.def("set_kill_momenta", &set_kill_momenta, "Set the kill momenta");
+    m.def("set_max_steps", &set_max_steps, "Set max number of steps");
     m.def("kill_secondary_tracks", &kill_secondary_tracks, "Kill all tracks from resulting cascade");
+    m.def("is_single_step", &is_single_step, "Single step simulations for collecting data");
     m.def("visualize", &visualize, "Visualize");
+    m.def("cuda_test_propagate_muons", &cuda_test_propagate_muons, "CUDA test propage");
 }
 
 // Compile the C++ code to a shared library

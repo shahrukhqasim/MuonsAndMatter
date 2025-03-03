@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(my_project)
+project(muon_shield)
 
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -33,6 +33,7 @@ set(SOURCE_FILES
         GDetectorConstruction.cc
         SlimFilm.cc
         SlimFilmSensitiveDetector.cc
+        FasterMuonsBeforeCuda.cc
         )
 
 
@@ -50,3 +51,4 @@ pybind11_add_module(muon_slabs MuonSlabs.cc)
 target_link_libraries(muon_slabs PUBLIC common_sources ${Geant4_LIBRARIES} jsoncpp_lib)
 
 configure_file(init_vis.mac init_vis.mac COPYONLY)
+configure_file(exported.json exported.json COPYONLY)

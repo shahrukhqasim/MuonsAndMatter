@@ -55,6 +55,9 @@ G4UserLimits * DetectorConstruction::getLimitsFromDetectorConfig(const Json::Val
         G4double temp = detectorData["limits"]["max_step_length"].asDouble() * m;
         if (temp > 0)
             maxStepLength = temp;
+
+        std::cout<<"Applied the limit "<<temp<<std::endl<<std::endl;
+
     }
     maxTrackLength = DBL_MAX;
     G4double maxTime = DBL_MAX;        // No limit on time
@@ -62,6 +65,8 @@ G4UserLimits * DetectorConstruction::getLimitsFromDetectorConfig(const Json::Val
     G4double minKineticEnergy = 100 * MeV; // Minimum kinetic energy
     if (not detectorData.empty()) {
         G4double temp = detectorData["limits"]["minimum_kinetic_energy"].asDouble() * GeV;
+        std::cout<<"Applied the limit on energy "<<temp<<std::endl<<std::endl;
+
         if (temp > 0)
             minKineticEnergy = temp;
     }
@@ -114,7 +119,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
     new G4PVPlacement(0, G4ThreeVector(), logicSphere, "SphereZ", logicWorld, false, 0, true);
 
     // Define the uniform magnetic field
-    G4ThreeVector fieldValue = G4ThreeVector(1*tesla, 0., 0.);
+    G4ThreeVector fieldValue = G4ThreeVector(0*tesla, 0., 0.);
     magField = new G4UniformMagField(fieldValue);
 
     // Get the global field manager
@@ -141,8 +146,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
     return physWorld;
 }
 
-void DetectorConstruction::setMagneticFieldValue(double strength, double theta, double phi) {
-    G4ThreeVector fieldValue = G4ThreeVector(strength*tesla, theta, phi);
+void DetectorConstruction::setMagneticFieldValue(double x, double y, double z) {
+    G4ThreeVector fieldValue = G4ThreeVector(x*tesla, y*tesla, z*tesla);
 
     magField->SetFieldValue(fieldValue);
 }

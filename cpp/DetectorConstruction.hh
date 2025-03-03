@@ -15,7 +15,7 @@ public:
     virtual ~DetectorConstruction();
 
     virtual G4VPhysicalVolume* Construct();
-    virtual void setMagneticFieldValue(double strength, double theta, double phi);
+    virtual void setMagneticFieldValue(double x, double y, double z);
     virtual G4UserLimits * getLimitsFromDetectorConfig(const Json::Value& detectorData);
     virtual double getDetectorWeight();
 protected:

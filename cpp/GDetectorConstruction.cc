@@ -37,13 +37,169 @@
 #include "G4Para.hh"
 #include "G4GenericTrap.hh"
 #include "SlimFilmSensitiveDetector.hh"
+#include "G4Tubs.hh"
 
 
 #include <iostream>
 #include <G4Trap.hh>
 #include <G4GeometryTolerance.hh>
 
+G4LogicalVolume * GDetectorConstruction::buildFromFairShip() {
+    const Json::Value &cave = fairShipData["cave"];
+    return processNode(cave, "cave", 0, nullptr);
+}
+
+G4LogicalVolume*
+GDetectorConstruction::handleTube(const Json::Value &node, const std::string &name, G4LogicalVolume *logicalParent) {
+    G4NistManager* nist = G4NistManager::Instance();
+    G4Material* constantMaterial = nist->FindOrBuildMaterial("G4_AIR");
+
+    double dz = node["dz"].asDouble();
+    double rmax = node["rmax"].asDouble();
+    double rmin = node["rmin"].asDouble();
+
+
+    auto genericV = new G4Tubs(name, rmin, rmax, dz, 0.0*rad, 2*M_PI*rad);
+
+    auto logical = new G4LogicalVolume(genericV, constantMaterial, name);
+
+
+
+    if (logicalParent!= nullptr) {
+        G4ThreeVector translation(node["transformation"]["translation"][0].asDouble(), node["transformation"]["translation"][1].asDouble(), node["transformation"]["translation"][2].asDouble());
+        auto rotMatrix = new G4RotationMatrix();
+
+        G4ThreeVector rot1(node["transformation"]["rotation"][0].asDouble(), node["transformation"]["rotation"][1].asDouble(), node["transformation"]["rotation"][2].asDouble());
+        G4ThreeVector rot2(node["transformation"]["rotation"][3].asDouble(), node["transformation"]["rotation"][4].asDouble(), node["transformation"]["rotation"][5].asDouble());
+        G4ThreeVector rot3(node["transformation"]["rotation"][6].asDouble(), node["transformation"]["rotation"][7].asDouble(), node["transformation"]["rotation"][8].asDouble());
+        rotMatrix->setRows(rot1, rot2, rot3);
+
+        new G4PVPlacement(rotMatrix, translation, logical, name, logicalParent, false, 0, true);
+    }
+
+    return logical;
+}
+
+G4LogicalVolume*
+GDetectorConstruction::handleArb8(const Json::Value &node, const std::string &name, G4LogicalVolume *logicalParent) {
+    G4NistManager* nist = G4NistManager::Instance();
+    G4Material* constantMaterial = nist->FindOrBuildMaterial("G4_AIR");
+
+    double dz = node["dz"].asDouble();
+
+    std::vector<G4TwoVector> corners_two;
+
+    Json::Value corners = node["vertices"];
+
+    for (int i = 0; i < 8; ++i) {
+        corners_two.push_back(G4TwoVector (corners[i*2].asDouble() * m, corners[i*2+1].asDouble() * m));
+    }
+
+
+
+    auto genericV = new G4GenericTrap(name, dz, corners_two);
+
+    auto logical = new G4LogicalVolume(genericV, constantMaterial, name);
+
+
+
+    if (logicalParent!= nullptr) {
+        G4ThreeVector translation(node["transformation"]["translation"][0].asDouble(), node["transformation"]["translation"][1].asDouble(), node["transformation"]["translation"][2].asDouble());
+        auto rotMatrix = new G4RotationMatrix();
+
+        G4ThreeVector rot1(node["transformation"]["rotation"][0].asDouble(), node["transformation"]["rotation"][1].asDouble(), node["transformation"]["rotation"][2].asDouble());
+        G4ThreeVector rot2(node["transformation"]["rotation"][3].asDouble(), node["transformation"]["rotation"][4].asDouble(), node["transformation"]["rotation"][5].asDouble());
+        G4ThreeVector rot3(node["transformation"]["rotation"][6].asDouble(), node["transformation"]["rotation"][7].asDouble(), node["transformation"]["rotation"][8].asDouble());
+        rotMatrix->setRows(rot1, rot2, rot3);
+
+        new G4PVPlacement(rotMatrix, translation, logical, name, logicalParent, false, 0, true);
+    }
+
+    return logical;
+}
+
+G4LogicalVolume*
+GDetectorConstruction::handleBBox(const Json::Value &node, const std::string &name, G4LogicalVolume *logicalParent) {
+    if (node["dx"].asDouble() == 0 or node["dy"].asDouble() == 0 or node["dz"].asDouble() == 0)
+        return nullptr;
+
+    G4NistManager* nist = G4NistManager::Instance();
+    G4Material* constantMaterial = nist->FindOrBuildMaterial("G4_AIR");
+
+
+    // Create the world volume
+    auto theBox = new G4Box(name, node["dx"].asDouble(), node["dy"].asDouble(), node["dz"].asDouble());
+    auto logical = new G4LogicalVolume(theBox, constantMaterial, name);
+
+
+
+    if (logicalParent!= nullptr) {
+        G4ThreeVector translation(node["transformation"]["translation"][0].asDouble(), node["transformation"]["translation"][1].asDouble(), node["transformation"]["translation"][2].asDouble());
+//        translation = translation - G4ThreeVector(node["origin"][0].asDouble(), node["origin"][1].asDouble(), node["origin"][2].asDouble());
+
+        auto rotMatrix = new G4RotationMatrix();
+
+        G4ThreeVector rot1(node["transformation"]["rotation"][0].asDouble(), node["transformation"]["rotation"][1].asDouble(), node["transformation"]["rotation"][2].asDouble());
+        G4ThreeVector rot2(node["transformation"]["rotation"][3].asDouble(), node["transformation"]["rotation"][4].asDouble(), node["transformation"]["rotation"][5].asDouble());
+        G4ThreeVector rot3(node["transformation"]["rotation"][6].asDouble(), node["transformation"]["rotation"][7].asDouble(), node["transformation"]["rotation"][8].asDouble());
+        rotMatrix->setRows(rot1, rot2, rot3);
+
+        new G4PVPlacement(rotMatrix, translation, logical, name, logicalParent, false, 0, true);
+    }
+
+    return logical;
+}
+
+G4LogicalVolume * GDetectorConstruction::processNode(const Json::Value &node, const std::string &name, int level,
+                                                    G4LogicalVolume *logicalVol) {
+    if (toSkip.find(name) != toSkip.end()) {
+        std::cout<<"Skipping "<<name<<std::endl;
+        return logicalVol;
+    }
+
+
+
+    if (level>100)
+        return logicalVol;
+
+
+    G4LogicalVolume* volForSubs=nullptr;
+    if (node["type"].asString().find("TGeoBBox")!=std::string::npos) {
+        volForSubs = handleBBox(node, name, logicalVol);
+    }
+    else if (node["type"].asString().find("TGeoArb8")!=std::string::npos) {
+        volForSubs = handleArb8(node, name, logicalVol);
+    }
+    else if (node["type"].asString().find("TGeoTube")!=std::string::npos) {
+        volForSubs = handleTube(node, name, logicalVol);
+    }
+    else {
+        return logicalVol;
+    }
+
+
+    const Json::Value& subNodes = node["subnodes"];
+
+
+    // Iterate through the JSON object
+    for (const auto& key : subNodes.getMemberNames()) {
+//        const Json::Value& value = jsonValue[key];
+        for (auto ii = 0; ii < level; ii++)
+            std::cout<<"\t";
+        std::cout << "Key: " << key << std::endl;
+        processNode(subNodes[key], key, level + 1, volForSubs);
+    }
+
+    return volForSubs;
+
+//    std::cout<<"Length "<<subNodes.size()<<std::endl;
+
+}
+
 G4VPhysicalVolume *GDetectorConstruction::Construct() {
+    toSkip.insert("Al2_215:0");
+    toSkip.insert("pmma3_223:0");
+
     double limit_world_time_max_ = 5000 * ns;
     double limit_world_energy_max_ = 100 * eV;
 
@@ -78,13 +234,23 @@ G4VPhysicalVolume *GDetectorConstruction::Construct() {
     G4double worldPositionY = detectorData["worldPositionY"].asDouble() * m;
     G4double worldPositionZ = detectorData["worldPositionZ"].asDouble() * m;
 
-    // Create the world volume
+//    // Create the world volume
     G4Box* solidWorld = new G4Box("WorldX", worldSizeX / 2, worldSizeY / 2, worldSizeZ / 2);
     G4LogicalVolume* logicWorld = new G4LogicalVolume(solidWorld, worldMaterial, "WorldY");
     logicWorld->SetUserLimits(userLimits2);
 //    logicWorld->SetUserLimits(userLimits);
 
+
+//    if (not fairShipData.isNull())
+//    G4LogicalVolume* logicWorld = buildFromFairShip();
+
+    logicWorld->SetUserLimits(userLimits2);
+//    logicWorld->SetUserLimits(userLimits);
+
+
     G4VPhysicalVolume* physWorld = new G4PVPlacement(0, G4ThreeVector(worldPositionX, worldPositionY, worldPositionZ), logicWorld, "WorldZ", 0, false, 0, true);
+
+//    return physWorld;
 
     // Process the magnets from the JSON variable
     const Json::Value magnets = detectorData["magnets"];
@@ -239,5 +405,9 @@ void GDetectorConstruction::ConstructSDandField() {
         std::cout<<"Sensitive set...\n";
     }
 
+}
+
+void GDetectorConstruction::setFairShipData(const Json::Value &fairShipData) {
+    GDetectorConstruction::fairShipData = fairShipData;
 }
 
