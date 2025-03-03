@@ -7,6 +7,7 @@ def get_design():
         # "worldSizeZ": 100,
         # "magnets": magnets,
         "type": 3,
+        "store_all": True,
         "limits": {
             "max_step_length": -1,
             "minimum_kinetic_energy": -1

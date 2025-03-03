@@ -1,10 +1,12 @@
+import json
 import time
 
 import numpy as np
 import matplotlib.pyplot as plt
-from muon_slabs import add, simulate_muon, initialize, collect, set_field_value, set_kill_momenta, kill_secondary_tracks
+from muon_slabs import add, simulate_muon, initialize, collect, set_field_value, set_kill_momenta, kill_secondary_tracks, is_single_step
 from tqdm import tqdm
 import pickle
+import lib.gigantic_sphere as sphere_design
 import gzip
 
 def random_vector_of_magnitude_p(p, num_vectors=1):
@@ -36,22 +38,21 @@ def random_vector_of_magnitude_p(p, num_vectors=1):
     return vectors
 
 
+detector = sphere_design.get_design()
+
 # Add function test
 print(add(1,2))
 # Initialize muon simulation
-initialize(0, 4, 4, 4)
-kill_secondary_tracks(True)
-set_kill_momenta(65) # No use here
+# Initialize muon simulation
+# set_kill_momenta(65) # No use here
 
 
-
-num_sims = 200000
-initial_momenta_vectors = random_vector_of_magnitude_p(1, num_sims)
-
-
+# num_sims = 100000000
+num_sims = int(50*1000000)
+# initial_momenta_vectors = random_vector_of_magnitude_p(1, num_sims)
 
 load_old = False
-pickle_file = '../../data/muon_data_energy_loss.pkl'
+pickle_file = 'data/muon_data_energy_loss_single_step_2.pkl'
 
 if load_old:
     # Load old data from pickle file
@@ -65,16 +66,40 @@ if load_old:
 else:
     # Generate all muons and collect their data
     muon_data = []
+
+    detector['limits']['max_step_length'] = 0.0005
+    initialize(0, 4, 4, 5, json.dumps(detector))
+    # kill_secondary_tracks(True)
+    is_single_step(True)
+
+
+    stored_data = {
+        'initial_momenta': np.zeros(num_sims),
+        'px': np.zeros(num_sims),
+        'py': np.zeros(num_sims),
+        'pz': np.zeros(num_sims),
+        'step_length': np.zeros(num_sims),
+    }
+
     for i in tqdm(range(num_sims)):
-        p = np.random.uniform(4, 200)
-        set_kill_momenta(p-1)
-        simulate_muon(initial_momenta_vectors[i][0]*p, initial_momenta_vectors[i][1]*p, initial_momenta_vectors[i][2]*p, 1, 0, 0, 0)
+        initial_momenta = np.random.uniform(10, 200)
+        simulate_muon(0, 0, initial_momenta, 1, 0, 0, 0)
         data = collect()
-        muon_data.append(data)
+
+        stored_data['initial_momenta'][i] = initial_momenta
+        stored_data['px'][i] = data['px'][0]
+        stored_data['py'][i] = data['py'][0]
+        stored_data['pz'][i] = data['pz'][0]
+        stored_data['step_length'][i] = data['step_length'][0]
+
+        print(stored_data['initial_momenta'][i], stored_data['px'][i], stored_data['py'][i], stored_data['pz'][i], stored_data['pz'][i]-stored_data['initial_momenta'][i], stored_data['step_length'][i])
+
+
+    0/0
 
     # Dump muon_data to a pickle file
     with gzip.open(pickle_file, 'wb') as f:
-        pickle.dump(muon_data, f)
+        pickle.dump(stored_data, f)
     print("New data generated and saved successfully.")
 
 
@@ -105,5 +130,5 @@ ax.set_xlabel(r'$\delta_{\mathrm{step}} |P|$ [GeV]')
 ax.set_ylabel('Freq. (arb.)')
 ax.legend()
 ax.set_yscale('log')
-plt.savefig('delta_p_dist.pdf')
+plt.savefig('plots/delta_p_dist.pdf')
 plt.show()
