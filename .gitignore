@@ -22,3 +22,6 @@ data/
 
 # Ignore checks directory
 checks/
+
+cuda_muons/data/*
+cuda_muons/data/*/*
